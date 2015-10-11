@@ -1,0 +1,4 @@
+
+config NVME_TARGET
+	depends on BLOCK
+	tristate
