@@ -55,6 +55,8 @@ struct nvme_ctrl {
 	u32 ctrl_config;
 	u32 max_hw_sectors;
 	u32 stripe_size;
+	u32 max_segments;
+	u32 max_segment_size;
 	u32 page_size;
 	u16 oncs;
 	atomic_t abort_limit;
