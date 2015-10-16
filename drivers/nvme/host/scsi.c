@@ -606,16 +606,11 @@ static int nvme_trans_device_id_page(struct nvme_ns *ns, struct sg_io_hdr *hdr,
 	int res;
 	int nvme_sc;
 	int xfer_len;
-	u32 vs;
 	__be32 tmp_id = cpu_to_be32(ns->ns_id);
-
-	res = ctrl->ops->reg_read32(ctrl, NVME_REG_VS, &vs);
-	if (res)
-		return res;
 
 	memset(inq_response, 0, alloc_len);
 	inq_response[1] = INQ_DEVICE_IDENTIFICATION_PAGE;    /* Page Code */
-	if (vs >= NVME_VS(1, 1)) {
+	if (ctrl->vs >= NVME_VS(1, 1)) {
 		struct nvme_id_ns *id_ns;
 		void *eui;
 		int len;
@@ -627,7 +622,7 @@ static int nvme_trans_device_id_page(struct nvme_ns *ns, struct sg_io_hdr *hdr,
 
 		eui = id_ns->eui64;
 		len = sizeof(id_ns->eui64);
-		if (vs >= NVME_VS(1, 2)) {
+		if (ctrl->vs >= NVME_VS(1, 2)) {
 			if (bitmap_empty(eui, len * 8)) {
 				eui = id_ns->nguid;
 				len = sizeof(id_ns->nguid);
