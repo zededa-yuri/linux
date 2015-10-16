@@ -3106,6 +3106,9 @@ static int nvme_probe(struct pci_dev *pdev, const struct pci_device_id *id)
 	INIT_WORK(&dev->reset_work, nvme_reset_work);
 	dev->dev = get_device(&pdev->dev);
 	pci_set_drvdata(pdev, dev);
+
+	dev->vendor = pdev->vendor;
+
 	result = nvme_set_instance(dev);
 	if (result)
 		goto put_pci;

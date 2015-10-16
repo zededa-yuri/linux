@@ -657,7 +657,7 @@ static int nvme_trans_device_id_page(struct nvme_ns *ns, struct sg_io_hdr *hdr,
 		inq_response[6] = 0x00;    /* Rsvd */
 		inq_response[7] = 0x44;    /* Designator Length */
 
-		sprintf(&inq_response[8], "%04x", to_pci_dev(dev->dev)->vendor);
+		sprintf(&inq_response[8], "%04x", dev->vendor);
 		memcpy(&inq_response[12], dev->model, sizeof(dev->model));
 		sprintf(&inq_response[52], "%04x", tmp_id);
 		memcpy(&inq_response[56], dev->serial, sizeof(dev->serial));
