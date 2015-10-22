@@ -56,7 +56,7 @@ struct nvme_ctrl {
 	u32 stripe_size;
 	u32 page_size;
 	u16 oncs;
-	u16 abort_limit;
+	atomic_t abort_limit;
 	u8 event_limit;
 	u8 vwc;
 	u32 vs;
