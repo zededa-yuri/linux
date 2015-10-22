@@ -1068,7 +1068,9 @@ static enum blk_eh_timer_return nvme_timeout(struct request *req, bool reserved)
 				 req->tag, nvmeq->qid);
 		}
 		spin_unlock_irq(&dev_list_lock);
-		return BLK_EH_RESET_TIMER;
+
+		req->errors = -EIO;
+		return BLK_EH_HANDLED;
 	}
 
 	if (!dev->ctrl.abort_limit)
