@@ -189,6 +189,7 @@ static inline int nvme_error_status(u16 status)
 	}
 }
 
+void nvme_uninit_ctrl(struct nvme_ctrl *ctrl);
 int nvme_init_ctrl(struct nvme_ctrl *ctrl, struct device *dev,
 		const struct nvme_ctrl_ops *ops, u16 vendor,
 		unsigned long quirks);
