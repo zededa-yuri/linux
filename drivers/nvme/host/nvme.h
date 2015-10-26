@@ -207,7 +207,7 @@ void nvme_remove_namespaces(struct nvme_ctrl *ctrl);
 
 void nvme_requeue_req(struct request *req);
 struct request *nvme_alloc_request(struct request_queue *q,
-		struct nvme_command *cmd);
+		struct nvme_command *cmd, bool nowait);
 int nvme_submit_sync_cmd(struct request_queue *q, struct nvme_command *cmd,
 		void *buf, unsigned bufflen);
 int __nvme_submit_sync_cmd(struct request_queue *q, struct nvme_command *cmd,

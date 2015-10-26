@@ -86,12 +86,12 @@ void nvme_requeue_req(struct request *req)
 }
 
 struct request *nvme_alloc_request(struct request_queue *q,
-		struct nvme_command *cmd)
+		struct nvme_command *cmd, bool nowait)
 {
 	bool write = cmd->common.opcode & 1;
 	struct request *req;
 
-	req = blk_mq_alloc_request(q, write, GFP_KERNEL, false);
+	req = blk_mq_alloc_request(q, write, GFP_KERNEL, nowait);
 	if (IS_ERR(req))
 		return req;
 
@@ -118,7 +118,7 @@ int __nvme_submit_sync_cmd(struct request_queue *q, struct nvme_command *cmd,
 	struct request *req;
 	int ret;
 
-	req = nvme_alloc_request(q, cmd);
+	req = nvme_alloc_request(q, cmd, false);
 	if (IS_ERR(req))
 		return PTR_ERR(req);
 
@@ -158,7 +158,7 @@ int __nvme_submit_user_cmd(struct request_queue *q, struct nvme_command *cmd,
 	void *meta = NULL;
 	int ret;
 
-	req = nvme_alloc_request(q, cmd);
+	req = nvme_alloc_request(q, cmd, false);
 	if (IS_ERR(req))
 		return PTR_ERR(req);
 
