@@ -85,7 +85,7 @@ void nvme_requeue_req(struct request *req)
 	spin_unlock_irqrestore(req->q->queue_lock, flags);
 }
 
-static struct request *nvme_alloc_request(struct request_queue *q,
+struct request *nvme_alloc_request(struct request_queue *q,
 		struct nvme_command *cmd)
 {
 	bool write = cmd->common.opcode & 1;
