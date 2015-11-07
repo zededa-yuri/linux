@@ -334,6 +334,23 @@ int nvme_get_log_page(struct nvme_ctrl *dev, struct nvme_smart_log **log)
 	return error;
 }
 
+int nvme_set_queue_count(struct nvme_ctrl *ctrl, int count)
+{
+	int status;
+	u32 result;
+	u32 q_count = (count - 1) | ((count - 1) << 16);
+
+	status = nvme_set_features(ctrl, NVME_FEAT_NUM_QUEUES, q_count, 0,
+			&result);
+	if (status < 0)
+		return status;
+	if (status > 0) {
+		dev_err(ctrl->dev, "Could not set queue count (%d)\n", status);
+		return 0;
+	}
+	return min(result & 0xffff, result >> 16) + 1;
+}
+
 static int nvme_submit_io(struct nvme_ns *ns, struct nvme_user_io __user *uio)
 {
 	struct nvme_user_io io;

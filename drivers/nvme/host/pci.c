@@ -1464,23 +1464,6 @@ static void nvme_create_io_queues(struct nvme_dev *dev)
 		}
 }
 
-static int set_queue_count(struct nvme_dev *dev, int count)
-{
-	int status;
-	u32 result;
-	u32 q_count = (count - 1) | ((count - 1) << 16);
-
-	status = nvme_set_features(&dev->ctrl, NVME_FEAT_NUM_QUEUES, q_count, 0,
-								&result);
-	if (status < 0)
-		return status;
-	if (status > 0) {
-		dev_err(dev->dev, "Could not set queue count (%d)\n", status);
-		return 0;
-	}
-	return min(result & 0xffff, result >> 16) + 1;
-}
-
 static void __iomem *nvme_map_cmb(struct nvme_dev *dev)
 {
 	u64 szu, size, offset;
@@ -1545,7 +1528,7 @@ static int nvme_setup_io_queues(struct nvme_dev *dev)
 	int result, i, vecs, nr_io_queues, size;
 
 	nr_io_queues = num_possible_cpus();
-	result = set_queue_count(dev, nr_io_queues);
+	result = nvme_set_queue_count(&dev->ctrl, nr_io_queues);
 	if (result <= 0)
 		return result;
 	if (result < nr_io_queues)
