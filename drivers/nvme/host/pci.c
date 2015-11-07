@@ -1292,16 +1292,11 @@ static int nvme_configure_admin_queue(struct nvme_dev *dev)
 
 	dev->page_size = 1 << page_shift;
 
-	dev->ctrl.ctrl_config = NVME_CC_CSS_NVM;
-	dev->ctrl.ctrl_config |= (page_shift - 12) << NVME_CC_MPS_SHIFT;
-	dev->ctrl.ctrl_config |= NVME_CC_ARB_RR | NVME_CC_SHN_NONE;
-	dev->ctrl.ctrl_config |= NVME_CC_IOSQES | NVME_CC_IOCQES;
-
 	writel(aqa, dev->bar + NVME_REG_AQA);
 	writeq(nvmeq->sq_dma_addr, dev->bar + NVME_REG_ASQ);
 	writeq(nvmeq->cq_dma_addr, dev->bar + NVME_REG_ACQ);
 
-	result = nvme_enable_ctrl(&dev->ctrl, cap);
+	result = nvme_enable_ctrl(&dev->ctrl, cap, page_shift);
 	if (result)
 		goto free_nvmeq;
 

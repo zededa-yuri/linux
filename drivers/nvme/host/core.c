@@ -400,9 +400,12 @@ int nvme_disable_ctrl(struct nvme_ctrl *ctrl, u64 cap)
 	return nvme_update_ctrl_config(ctrl, cap, false);
 }
 
-int nvme_enable_ctrl(struct nvme_ctrl *ctrl, u64 cap)
+int nvme_enable_ctrl(struct nvme_ctrl *ctrl, u64 cap, unsigned page_shift)
 {
-	ctrl->ctrl_config &= ~NVME_CC_SHN_MASK;
+	ctrl->ctrl_config = NVME_CC_CSS_NVM;
+	ctrl->ctrl_config |= (page_shift - 12) << NVME_CC_MPS_SHIFT;
+	ctrl->ctrl_config |= NVME_CC_ARB_RR | NVME_CC_SHN_NONE;
+	ctrl->ctrl_config |= NVME_CC_IOSQES | NVME_CC_IOCQES;
 	ctrl->ctrl_config |= NVME_CC_ENABLE;
 
 	return nvme_update_ctrl_config(ctrl, cap, true);
