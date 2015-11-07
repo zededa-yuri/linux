@@ -14,6 +14,7 @@
 
 #include <linux/blkdev.h>
 #include <linux/blk-mq.h>
+#include <linux/delay.h>
 #include <linux/errno.h>
 #include <linux/hdreg.h>
 #include <linux/kernel.h>
@@ -31,6 +32,10 @@
 #include "nvme.h"
 
 #define NVME_MINORS		(1U << MINORBITS)
+
+static unsigned char shutdown_timeout = 5;
+module_param(shutdown_timeout, byte, 0644);
+MODULE_PARM_DESC(shutdown_timeout, "timeout in seconds for controller shutdown");
 
 static int nvme_major;
 module_param(nvme_major, int, 0);
@@ -349,6 +354,88 @@ int nvme_set_queue_count(struct nvme_ctrl *ctrl, int count)
 		return 0;
 	}
 	return min(result & 0xffff, result >> 16) + 1;
+}
+
+static int nvme_update_ctrl_config(struct nvme_ctrl *ctrl, u64 cap,
+		bool enabled)
+{
+	unsigned long timeout =
+		((NVME_CAP_TIMEOUT(cap) + 1) * HZ / 2) + jiffies;
+	u32 bit = enabled ? NVME_CSTS_RDY : 0, csts;
+	int error;
+
+	error = ctrl->ops->reg_write32(ctrl, NVME_REG_CC, ctrl->ctrl_config);
+	if (error)
+		return error;
+
+	while (!(error = ctrl->ops->reg_read32(ctrl, NVME_REG_CSTS, &csts))) {
+		if ((csts & NVME_CSTS_RDY) == bit)
+			break;
+
+		msleep(100);
+		if (fatal_signal_pending(current))
+			return -EINTR;
+		if (time_after(jiffies, timeout)) {
+			dev_err(ctrl->dev,
+				"Controller not ready; aborting %s\n", enabled ?
+						"initialisation" : "reset");
+			return -ENODEV;
+		}
+	}
+
+	return error;
+}
+
+/*
+ * If the device has been passed off to us in an enabled state, just clear
+ * the enabled bit.  The spec says we should set the 'shutdown notification
+ * bits', but doing so may cause the device to complete commands to the
+ * admin queue ... and we don't know what memory that might be pointing at!
+ */
+int nvme_disable_ctrl(struct nvme_ctrl *ctrl, u64 cap)
+{
+	ctrl->ctrl_config &= ~NVME_CC_SHN_MASK;
+	ctrl->ctrl_config &= ~NVME_CC_ENABLE;
+
+	return nvme_update_ctrl_config(ctrl, cap, false);
+}
+
+int nvme_enable_ctrl(struct nvme_ctrl *ctrl, u64 cap)
+{
+	ctrl->ctrl_config &= ~NVME_CC_SHN_MASK;
+	ctrl->ctrl_config |= NVME_CC_ENABLE;
+
+	return nvme_update_ctrl_config(ctrl, cap, true);
+}
+
+int nvme_shutdown_ctrl(struct nvme_ctrl *ctrl)
+{
+	unsigned long timeout = (shutdown_timeout * HZ) + jiffies;
+	u32 csts;
+	int error;
+
+	ctrl->ctrl_config &= ~NVME_CC_SHN_MASK;
+	ctrl->ctrl_config |= NVME_CC_SHN_NORMAL;
+
+	error = ctrl->ops->reg_write32(ctrl, NVME_REG_CC, ctrl->ctrl_config);
+	if (error)
+		return error;
+
+	while (!(error = ctrl->ops->reg_read32(ctrl, NVME_REG_CSTS, &csts))) {
+		if ((csts & NVME_CSTS_SHST_MASK) != NVME_CSTS_SHST_CMPLT)
+			break;
+
+		msleep(100);
+		if (fatal_signal_pending(current))
+			return -EINTR;
+		if (time_after(jiffies, timeout)) {
+			dev_err(ctrl->dev,
+				"Device shutdown incomplete; abort shutdown\n");
+			return -ENODEV;
+		}
+	}
+
+	return error;
 }
 
 static int nvme_submit_io(struct nvme_ns *ns, struct nvme_user_io __user *uio)

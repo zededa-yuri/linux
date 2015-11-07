@@ -52,6 +52,7 @@ struct nvme_ctrl {
 	char serial[20];
 	char model[40];
 	char firmware_rev[8];
+	u32 ctrl_config;
 	u32 max_hw_sectors;
 	u32 stripe_size;
 	u32 page_size;
@@ -228,6 +229,9 @@ int nvme_get_features(struct nvme_ctrl *dev, unsigned fid, unsigned nsid,
 int nvme_set_features(struct nvme_ctrl *dev, unsigned fid, unsigned dword11,
 			dma_addr_t dma_addr, u32 *result);
 int nvme_set_queue_count(struct nvme_ctrl *ctrl, int count);
+int nvme_disable_ctrl(struct nvme_ctrl *ctrl, u64 cap);
+int nvme_enable_ctrl(struct nvme_ctrl *ctrl, u64 cap);
+int nvme_shutdown_ctrl(struct nvme_ctrl *ctrl);
 
 extern spinlock_t dev_list_lock;
 
