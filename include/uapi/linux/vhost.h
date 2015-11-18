@@ -180,8 +180,19 @@ struct nvmet_vhost_eventfd {
 	int *vector;
 };
 
-#define VHOST_NVME_SET_ENDPOINT _IOW(VHOST_VIRTIO, 0x47, struct vhost_nvme_target)
-#define VHOST_NVME_CLEAR_ENDPOINT _IOW(VHOST_VIRTIO, 0x48, struct vhost_nvme_target)
-#define VHOST_NVME_SET_EVENTFD _IOW(VHOST_VIRTIO, 0x45, struct nvmet_vhost_eventfd)
+#define VHOST_NVME_BAR_READ 0
+#define VHOST_NVME_BAR_WRITE 1
+
+struct nvmet_vhost_bar {
+	int type; /* read/write */
+	u64 offset;
+	unsigned size;
+	u64 val;
+};
+
+#define VHOST_NVME_SET_ENDPOINT _IOW(VHOST_VIRTIO, 0x45, struct vhost_nvme_target)
+#define VHOST_NVME_CLEAR_ENDPOINT _IOW(VHOST_VIRTIO, 0x46, struct vhost_nvme_target)
+#define VHOST_NVME_SET_EVENTFD _IOW(VHOST_VIRTIO, 0x47, struct nvmet_vhost_eventfd)
+#define VHOST_NVME_BAR _IOW(VHOST_VIRTIO, 0x48, struct nvmet_vhost_bar)
 
 #endif
