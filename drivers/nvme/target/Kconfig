@@ -85,3 +85,13 @@ config NVME_TARGET_TCP
 	  devices over TCP.
 
 	  If unsure, say N.
+
+config NVME_TARGET_VHOST
+	tristate "NVMe vhost support"
+	select NVME_TARGET
+	select VHOST
+	select VHOST_RING
+	help
+	  This enables the NVMe vhost support.
+
+	  If unsure, say N.

@@ -130,6 +130,27 @@ struct vhost_scsi_target {
 	unsigned short reserved;
 };
 
+struct vhost_nvme_target {
+	char vhost_wwpn[224]; /* TRANSPORT_IQN_LEN */
+};
+
+struct nvmet_vhost_eventfd {
+	int num;
+	int fd;
+	int *irq_enabled;
+	int *vector;
+};
+
+#define VHOST_NVME_BAR_READ 0
+#define VHOST_NVME_BAR_WRITE 1
+
+struct nvmet_vhost_bar {
+	int type; /* read/write */
+	u64 offset;
+	unsigned size;
+	u64 val;
+};
+
 /* VHOST_VDPA specific definitions */
 
 struct vhost_vdpa_config {

@@ -166,6 +166,11 @@ struct vhost_dev {
 			   struct vhost_iotlb_msg *msg);
 };
 
+int vhost_mem_copy_to_user(struct vhost_dev *vdev, void __user *to,
+			   const void *from, unsigned size);
+int vhost_mem_copy_from_user(struct vhost_dev *vdev, void *to,
+			     void __user *from, unsigned size);
+
 bool vhost_exceeds_weight(struct vhost_virtqueue *vq, int pkts, int total_len);
 void vhost_dev_init(struct vhost_dev *, struct vhost_virtqueue **vqs,
 		    int nvqs, int iov_limit, int weight, int byte_weight,

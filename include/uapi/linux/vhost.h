@@ -150,4 +150,10 @@
 /* Get the valid iova range */
 #define VHOST_VDPA_GET_IOVA_RANGE	_IOR(VHOST_VIRTIO, 0x78, \
 					     struct vhost_vdpa_iova_range)
+
+#define VHOST_NVME_SET_ENDPOINT _IOW(VHOST_VIRTIO, 0x45, struct vhost_nvme_target)
+#define VHOST_NVME_CLEAR_ENDPOINT _IOW(VHOST_VIRTIO, 0x46, struct vhost_nvme_target)
+#define VHOST_NVME_SET_EVENTFD _IOW(VHOST_VIRTIO, 0x47, struct nvmet_vhost_eventfd)
+#define VHOST_NVME_BAR _IOW(VHOST_VIRTIO, 0x48, struct nvmet_vhost_bar)
+
 #endif
