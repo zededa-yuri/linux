@@ -12,3 +12,14 @@ config NVME_TARGET_LOOP
 	  to test NVMe host and target side features.
 
 	  If unsure, say N.
+
+config NVME_TARGET_VHOST
+	tristate "NVMe vhost support"
+	depends on BLK_DEV_NVME
+	select NVME_TARGET
+	select VHOST
+	select VHOST_RING
+	help
+	  This enabled the NVMe vhost support.
+
+	  If unsure, say N.
