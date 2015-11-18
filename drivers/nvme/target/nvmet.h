@@ -59,6 +59,9 @@ struct nvmet_ctrl {
 	struct kref		ref;
 #define NVMET_SUBSYS_NAME_LEN		256
 	char			subsys_name[NVMET_SUBSYS_NAME_LEN];
+
+	void			*opaque;
+	void			(*start)(void *);
 };
 
 struct nvmet_subsys {
