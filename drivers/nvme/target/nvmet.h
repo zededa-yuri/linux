@@ -207,6 +207,9 @@ struct nvmet_ctrl {
 	u64			err_counter;
 	struct nvme_error_slot	slots[NVMET_ERROR_LOG_SLOTS];
 	bool			pi_support;
+
+	void			*opaque;
+	void			(*start)(void *);
 };
 
 struct nvmet_subsys_model {

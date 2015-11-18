@@ -1128,6 +1128,9 @@ static void nvmet_start_ctrl(struct nvmet_ctrl *ctrl)
 	 */
 	if (ctrl->kato)
 		mod_delayed_work(system_wq, &ctrl->ka_work, ctrl->kato * HZ);
+
+	if (ctrl->start)
+		ctrl->start(ctrl->opaque);
 }
 
 static void nvmet_clear_ctrl(struct nvmet_ctrl *ctrl)
