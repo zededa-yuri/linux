@@ -44,6 +44,8 @@ struct nvmet_sq {
 	u16			size;
 };
 
+struct nvmet_req;
+
 struct nvmet_ctrl {
 	struct nvmet_subsys	*subsys;
 	struct nvmet_cq		**cqs;
@@ -62,6 +64,7 @@ struct nvmet_ctrl {
 
 	void			*opaque;
 	void			(*start)(void *);
+	int			(*parse_extra_admin_cmd)(struct nvmet_req *);
 };
 
 struct nvmet_subsys {

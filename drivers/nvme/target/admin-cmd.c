@@ -346,6 +346,13 @@ int nvmet_parse_admin_cmd(struct nvmet_req *req)
 		req->data = 0;
 		return 0;
 #endif
+	default:
+		if (req->sq->ctrl->parse_extra_admin_cmd) {
+			int ret = req->sq->ctrl->parse_extra_admin_cmd(req);
+
+			if (!ret)
+				return 0;
+		}
 	}
 
 	pr_err("nvmet: unhandled cmd %d\n", cmd->common.opcode);
