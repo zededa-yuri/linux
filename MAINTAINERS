@@ -2740,12 +2740,15 @@ L:	netdev@vger.kernel.org
 S:	Maintained
 F:	drivers/net/ethernet/cirrus/ep93xx_eth.c
 
-CIRRUS LOGIC AUDIO CODEC DRIVERS
-M:	Brian Austin <brian.austin@cirrus.com>
-M:	Paul Handrigan <Paul.Handrigan@cirrus.com>
-L:	alsa-devel@alsa-project.org (moderated for non-subscribers)
-S:	Maintained
-F:	sound/soc/codecs/cs*
+CLANG/LLVM BUILD SUPPORT
+L:	clang-built-linux@googlegroups.com
+S:	Supported
+W:	https://clangbuiltlinux.github.io/
+B:	https://github.com/ClangBuiltLinux/linux/issues
+C:	irc://chat.freenode.net/clangbuiltlinux
+F:	Documentation/kbuild/llvm.rst
+F:	scripts/clang-tools/
+K:	\b(?i:clang|llvm)\b
 
 CLEANCACHE API
 M:	Konrad Rzeszutek Wilk <konrad.wilk@oracle.com>
