@@ -823,21 +823,27 @@ static struct file *__fget_files(struct files_struct *files, unsigned int fd,
 				 fmode_t mask, unsigned int refs)
 {
 	struct file *file;
+	bool again = false;
 
-	rcu_read_lock();
-loop:
-	file = fcheck_files(files, fd);
-	if (file) {
-		/* File object ref couldn't be taken.
-		 * dup2() atomicity guarantee is the reason
-		 * we loop to catch the new file (or NULL pointer)
-		 */
-		if (file->f_mode & mask)
-			file = NULL;
-		else if (!get_file_rcu_many(file, refs))
-			goto loop;
-	}
-	rcu_read_unlock();
+	do {
+		rcu_read_lock();
+
+		file = fcheck_files(files, fd);
+		if (file) {
+			/* File object ref couldn't be taken.
+			* dup2() atomicity guarantee is the reason
+			* we loop to catch the new file (or NULL pointer)
+			*/
+			if (file->f_mode & mask)
+				file = NULL;
+			else if (!get_file_rcu_many(file, refs))
+				again = true;
+		}
+		rcu_read_unlock();
+
+		if (unlikely(again))
+			schedule();
+	} while (again);
 
 	return file;
 }
