@@ -33,6 +33,7 @@
 #include <linux/timekeeping.h>
 #include <linux/timekeeper_internal.h>
 #include <linux/acpi.h>
+#include <linux/efi.h>
 
 #include <linux/mm.h>
 
@@ -61,6 +62,8 @@ static __read_mostly unsigned int xen_events_irq;
 
 uint32_t xen_start_flags;
 EXPORT_SYMBOL(xen_start_flags);
+
+uint64_t smbios_addr;
 
 int xen_unmap_domain_gfn_range(struct vm_area_struct *vma,
 			       int nr, struct page **pages)
@@ -303,6 +306,11 @@ static void __init xen_dt_guest_init(void)
 	}
 
 	xen_events_irq = irq_of_parse_and_map(xen_node, 0);
+
+	if (!of_property_read_u64(xen_node, "xen,smbios", &smbios_addr)) {
+		efi.smbios = smbios_addr;
+		set_bit(EFI_CONFIG_TABLES, &efi.flags);
+	}
 }
 
 static int __init xen_guest_init(void)
