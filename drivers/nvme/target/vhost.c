@@ -679,6 +679,10 @@ nvmet_vhost_set_endpoint(struct nvmet_vhost_ctrl *ctrl,
 	}
 	tgt_ctrl = ctrl->ctrl;
 
+	if (IS_ERR(tgt_ctrl)) {
+		return -EINVAL;
+	}
+
 	ctrl->cntlid = tgt_ctrl->cntlid;
 	ctrl->ctrl = tgt_ctrl;
 
@@ -1026,8 +1030,12 @@ static int nvmet_vhost_release(struct inode *inode, struct file *f)
 {
 	struct nvmet_vhost_ctrl *ctrl = f->private_data;
 
+	if (IS_ERR(ctrl)) {
+		return -EINVAL;
+	}
+
 	nvmet_vhost_clear_eventfd(ctrl);
-	nvmet_vhost_clear_ctrl(ctrl);
+	// nvmet_vhost_clear_ctrl(ctrl);
 
 	vhost_dev_stop(&ctrl->vdev);
 	vhost_dev_cleanup(&ctrl->vdev);
