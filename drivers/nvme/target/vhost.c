@@ -675,6 +675,7 @@ nvmet_vhost_set_endpoint(struct nvmet_vhost_ctrl *ctrl,
 
 	//TODO: Determine if any locking is needed
 	if (IS_ERR(ctrl)) {
+	  pr_err("Pointer to ctrl is error %ld\n", PTR_ERR(ctrl));
 		return -EINVAL;
 	}
 	tgt_ctrl = ctrl->ctrl;
@@ -1031,6 +1032,7 @@ static int nvmet_vhost_release(struct inode *inode, struct file *f)
 	struct nvmet_vhost_ctrl *ctrl = f->private_data;
 
 	if (IS_ERR(ctrl)) {
+	  pr_err("release: Pointer to ctrl is error %ld\n", PTR_ERR(ctrl));
 		return -EINVAL;
 	}
 
