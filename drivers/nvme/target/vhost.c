@@ -1046,6 +1046,12 @@ static int nvmet_vhost_release(struct inode *inode, struct file *f)
 	return 0;
 }
 
+static int vhost_nvme_set_features(struct nvmet_vhost_ctrl *ctrl, u64 features)
+{
+  pr_err("Set features is not implemented");
+  return 0;
+}
+
 static long nvmet_vhost_ioctl(struct file *f, unsigned int ioctl,
 			      unsigned long arg)
 {
@@ -1053,7 +1059,7 @@ static long nvmet_vhost_ioctl(struct file *f, unsigned int ioctl,
 	struct vhost_nvme_target conf;
 	void __user *argp = (void __user *)arg;
 	// u64 __user *featurep = argp;
-	// u64 features;
+	u64 features;
 	int r;
         pr_warn("VHOST GET IOCTL %d", ioctl);
 
@@ -1078,6 +1084,10 @@ static long nvmet_vhost_ioctl(struct file *f, unsigned int ioctl,
 		if (copy_to_user(featurep, &features, sizeof(features)))
 			return -EFAULT;
 		return 0; */
+	case VHOST_SET_FEATURES:
+		if (copy_from_user(&features, argp, sizeof(features)))
+			return -EFAULT;
+		return vhost_nvme_set_features(ctrl, features);
 	default:
 		mutex_lock(&ctrl->vdev.mutex);
 		r = vhost_dev_ioctl(&ctrl->vdev, ioctl, argp);
