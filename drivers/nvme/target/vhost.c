@@ -1083,11 +1083,11 @@ static long nvmet_vhost_ioctl(struct file *f, unsigned int ioctl,
 		return r;
 	case VHOST_NVME_BAR:
 		return nvmet_vhost_ioc_bar(ctrl, argp);
-/* 	case VHOST_GET_FEATURES:
+	case VHOST_GET_FEATURES:
 		features = VHOST_FEATURES;
-		if (copy_to_user(featurep, &features, sizeof(features)))
+		if (copy_to_user(argp, &features, sizeof(features)))
 			return -EFAULT;
-		return 0; */
+		return 0;
 	case VHOST_SET_FEATURES:
 		if (copy_from_user(&features, argp, sizeof(features)))
 			return -EFAULT;
