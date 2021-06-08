@@ -245,6 +245,7 @@ static void nvmet_vhost_enqueue_req_completion(
 	spin_unlock_irqrestore(&cq->lock, flags);
 }
 
+__maybe_unused
 static void nvmet_vhost_queue_response(struct nvmet_req *req)
 {
 	struct nvmet_vhost_iod *iod =
@@ -497,6 +498,7 @@ static int nvmet_vhost_init_sq(struct nvmet_vhost_sq *sq,
 	return 0;
 }
 
+__maybe_unused
 static void nvmet_vhost_start_ctrl(void *priv)
 {
 	struct nvmet_vhost_ctrl *ctrl = priv;
@@ -641,12 +643,13 @@ out:
 static int nvmet_vhost_process_iotlb_msg(struct vhost_dev *dev,
 					 struct vhost_iotlb_msg *msg)
 {
-	struct nvmet_vhost_ctrl *ctrl = container_of(dev, struct nvmet_vhost_ctrl, vdev);
+	/* struct nvmet_vhost_ctrl *ctrl = container_of(dev, struct nvmet_vhost_ctrl, vdev); */
 	//TODO: Determine if any IOTLB messages need to be processed
 	return 0;
 }
 
 
+__maybe_unused
 static int nvmet_vhost_parse_admin_cmd(struct nvmet_req *req)
 {
 	struct nvme_command *cmd = req->cmd;
@@ -828,7 +831,7 @@ static int nvmet_vhost_bar_read(struct nvmet_ctrl *ctrl, int offset, u64 *val)
 //TODO: Reuse the generic bar_write function
 static int nvmet_bar_write(struct nvmet_vhost_ctrl *ctrl, int offset, u64 val)
 {
-	struct nvmet_ctrl *nvme_ctrl = ctrl->ctrl;
+	/* struct nvmet_ctrl *nvme_ctrl = ctrl->ctrl; */
 	int status = NVME_SC_SUCCESS;
 
 	switch(offset) {
@@ -996,6 +999,7 @@ static void nvme_free_cq(struct nvmet_vhost_cq *cq,
 		kfree(cq);
 }
 
+__maybe_unused
 static void nvmet_vhost_clear_ctrl(struct nvmet_vhost_ctrl *ctrl)
 {
 	int i;
