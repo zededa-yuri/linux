@@ -692,13 +692,14 @@ nvmet_vhost_set_endpoint(struct nvmet_vhost_ctrl *ctrl,
 	ctrl->cntlid = tgt_ctrl->cntlid;
 	ctrl->ctrl = tgt_ctrl;
 
+	/*XXX: Set proper number of queues */
 	ctrl->num_queues = 1;
-#if 0
-	ctrl->num_queues = subsys->max_qid + 1;
-	ctrl->opaque = ctrl;
-	ctrl->start = nvmet_vhost_start_ctrl;
-	ctrl->parse_extra_admin_cmd = nvmet_vhost_parse_admin_cmd;
-#endif
+
+	/* ctrl->num_queues = subsys->max_qid + 1; */
+	ctrl->ctrl->opaque = ctrl;
+	ctrl->ctrl->start = nvmet_vhost_start_ctrl;
+	/* ctrl->parse_extra_admin_cmd = nvmet_vhost_parse_admin_cmd; */
+
 	num_queues = ctrl->num_queues;
 
 	ctrl->cqs = kzalloc(sizeof(struct nvme_vhost_cq *) * num_queues, GFP_KERNEL);
