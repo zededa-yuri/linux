@@ -681,8 +681,10 @@ nvmet_vhost_set_endpoint(struct nvmet_vhost_ctrl *ctrl,
 	  pr_err("Pointer to ctrl is error %ld\n", PTR_ERR(ctrl));
 		return -EINVAL;
 	}
+	pr_err("ctrl is %p\n", ctrl);
 	tgt_ctrl = ctrl->ctrl;
-
+	pr_err("tgt_ctrl is %p\n", tgt_ctrl);
+	
 	if (IS_ERR(tgt_ctrl)) {
 		return -EINVAL;
 	}
@@ -1065,34 +1067,41 @@ static long nvmet_vhost_ioctl(struct file *f, unsigned int ioctl,
 	// u64 __user *featurep = argp;
 	u64 features;
 	int r;
-        pr_warn("VHOST GET IOCTL %d", ioctl);
+        pr_err("VHOST GET IOCTL %d", ioctl);
 
 	switch (ioctl) {
 	case VHOST_NVME_SET_ENDPOINT:
+	  pr_err("%d, ctrl=%p", __LINE__, ctrl);
 		if (copy_from_user(&conf, argp, sizeof(conf)))
 			return -EFAULT;
 
 		return nvmet_vhost_set_endpoint(ctrl, &conf);
 	case VHOST_NVME_CLEAR_ENDPOINT:
+	  pr_err("%d", __LINE__);
 		if (copy_from_user(&conf, argp, sizeof(conf)))
 			return -EFAULT;
 
 		return nvmet_vhost_clear_endpoint(ctrl, &conf);
 	case VHOST_NVME_SET_EVENTFD:
+	  pr_err("%d", __LINE__);
 		r = nvmet_vhost_set_eventfd(ctrl, argp);
 		return r;
 	case VHOST_NVME_BAR:
+	  pr_err("%d", __LINE__);
 		return nvmet_vhost_ioc_bar(ctrl, argp);
 	case VHOST_GET_FEATURES:
+	  pr_err("%d", __LINE__);
 		features = VHOST_FEATURES;
 		if (copy_to_user(argp, &features, sizeof(features)))
 			return -EFAULT;
 		return 0;
 	case VHOST_SET_FEATURES:
+	  pr_err("%d", __LINE__);
 		if (copy_from_user(&features, argp, sizeof(features)))
 			return -EFAULT;
 		return vhost_nvme_set_features(ctrl, features);
 	default:
+	  pr_err("forwarding ioctl %d\n", ioctl);
 		mutex_lock(&ctrl->vdev.mutex);
 		r = vhost_dev_ioctl(&ctrl->vdev, ioctl, argp);
 		mutex_unlock(&ctrl->vdev.mutex);

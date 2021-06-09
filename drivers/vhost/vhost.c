@@ -1841,9 +1841,12 @@ long vhost_dev_ioctl(struct vhost_dev *d, unsigned int ioctl, void __user *argp)
 	long r;
 	int i, fd;
 
+	pr_err("serving %d\n", ioctl);
+
 	/* If you are not the owner, you can become one */
 	if (ioctl == VHOST_SET_OWNER) {
 		r = vhost_dev_set_owner(d);
+		pr_err("not the owner\n");
 		goto done;
 	}
 
