@@ -672,7 +672,6 @@ static int
 nvmet_vhost_set_endpoint(struct nvmet_vhost_ctrl *ctrl,
 			 struct vhost_nvme_target *nvme_tgt)
 {
-	struct nvmet_ctrl *tgt_ctrl;
 	int num_queues;
 	int ret = 0;
 
@@ -681,14 +680,6 @@ nvmet_vhost_set_endpoint(struct nvmet_vhost_ctrl *ctrl,
 	  pr_err("Pointer to ctrl is error %ld\n", PTR_ERR(ctrl));
 		return -EINVAL;
 	}
-	tgt_ctrl = ctrl->ctrl;
-
-	if (IS_ERR(tgt_ctrl)) {
-		return -EINVAL;
-	}
-
-	ctrl->cntlid = tgt_ctrl->cntlid;
-	ctrl->ctrl = tgt_ctrl;
 
 	ctrl->num_queues = 1;
 #if 0
@@ -724,7 +715,6 @@ free_sqs:
 free_cqs:
 	kfree(ctrl->cqs);
 out_ctrl_put:
-	nvmet_ctrl_put(tgt_ctrl);
 
 	return ret;
 }
