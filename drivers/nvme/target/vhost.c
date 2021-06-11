@@ -1154,6 +1154,10 @@ static struct miscdevice nvmet_vhost_misc = {
 	&nvmet_vhost_fops,
 };
 
+/* XXX: A lot of the code bellow is copipasted from scsi. I did not
+ * bother to rename the functions and structures. It is just easy for
+ * me to find the origin of the function
+ */
 struct vhost_scsi_tport {
 	/* SCSI protocol the tport is providing */
 	u8 tport_proto_id;
@@ -1201,10 +1205,138 @@ static char *vhost_vhost_get_fabric_wwn(struct se_portal_group *se_tpg)
 	/* return &tport->tport_name[0]; */
 }
 
+static u16 vhost_nvme_get_tpgt(struct se_portal_group *se_tpg)
+{
+	BUG();
+	/* struct vhost_scsi_tpg *tpg = container_of(se_tpg, */
+	/* 			struct vhost_scsi_tpg, se_tpg); */
+	/* return tpg->tport_tpgt; */
+}
+
+static int vhost_scsi_check_true(struct se_portal_group *se_tpg)
+{
+	return 1;
+}
+
+static int vhost_scsi_check_false(struct se_portal_group *se_tpg)
+{
+	return 0;
+}
+
+static u32 vhost_scsi_tpg_get_inst_index(struct se_portal_group *se_tpg)
+{
+	return 1;
+}
+
+static void vhost_scsi_release_cmd(struct se_cmd *se_cmd)
+{
+	BUG();
+}
+
+static u32 vhost_scsi_sess_get_index(struct se_session *se_sess)
+{
+	return 0;
+}
+
+static int vhost_scsi_write_pending(struct se_cmd *se_cmd)
+{
+	BUG();
+}
+
+static void vhost_scsi_set_default_node_attrs(struct se_node_acl *nacl)
+{
+	return;
+}
+
+static int vhost_scsi_get_cmd_state(struct se_cmd *se_cmd)
+{
+	return 0;
+}
+
+static int vhost_scsi_queue_data_in(struct se_cmd *se_cmd)
+{
+	BUG();
+}
+
+static int vhost_scsi_queue_status(struct se_cmd *se_cmd)
+{
+	BUG();
+}
+
+static void vhost_scsi_queue_tm_rsp(struct se_cmd *se_cmd)
+{
+	return;
+}
+
+static void vhost_scsi_aborted_task(struct se_cmd *se_cmd)
+{
+	return;
+}
+
+static struct se_wwn *
+vhost_scsi_make_tport(struct target_fabric_configfs *tf,
+		     struct config_group *group,
+		     const char *name)
+{
+	BUG();
+	return NULL;
+}
+
+static void vhost_scsi_drop_tport(struct se_wwn *wwn)
+{
+	BUG();
+}
+
+static struct se_portal_group *
+vhost_scsi_make_tpg(struct se_wwn *wwn,
+		   const char *name)
+{
+	BUG();
+	return NULL;
+}
+
+static void vhost_scsi_drop_tpg(struct se_portal_group *se_tpg)
+{
+	BUG();
+}
+
+static int vhost_scsi_check_stop_free(struct se_cmd *se_cmd)
+{
+	BUG();
+	return 0;
+	/* return target_put_sess_cmd(se_cmd); */
+}
+
 static const struct target_core_fabric_ops vhost_nvme_ops = {
 	.module				= THIS_MODULE,
 	.fabric_name			= "vhost-nvme",
-	.tpg_get_wwn =  vhost_vhost_get_fabric_wwn,
+	.tpg_get_wwn                    = vhost_vhost_get_fabric_wwn,
+	.tpg_get_tag			= vhost_nvme_get_tpgt,
+
+	.tpg_check_demo_mode		= vhost_scsi_check_true,
+	.tpg_check_demo_mode_cache	= vhost_scsi_check_true,
+	.tpg_check_demo_mode_write_protect = vhost_scsi_check_false,
+	.tpg_check_prod_mode_write_protect = vhost_scsi_check_false,
+	.tpg_get_inst_index		= vhost_scsi_tpg_get_inst_index,
+	.release_cmd			= vhost_scsi_release_cmd,
+	.sess_get_index			= vhost_scsi_sess_get_index,
+	.write_pending			= vhost_scsi_write_pending,
+	.set_default_node_attributes	= vhost_scsi_set_default_node_attrs,
+	.get_cmd_state			= vhost_scsi_get_cmd_state,
+	.queue_data_in			= vhost_scsi_queue_data_in,
+	.queue_status			= vhost_scsi_queue_status,
+	.queue_tm_rsp			= vhost_scsi_queue_tm_rsp,
+	.aborted_task			= vhost_scsi_aborted_task,
+	.check_stop_free		= vhost_scsi_check_stop_free,
+
+	/*
+	 * Setup callers for generic logic in target_core_fabric_configfs.c
+	 */
+	.fabric_make_wwn		= vhost_scsi_make_tport,
+	.fabric_drop_wwn		= vhost_scsi_drop_tport,
+	.fabric_make_tpg		= vhost_scsi_make_tpg,
+	.fabric_drop_tpg		= vhost_scsi_drop_tpg,
+	
 };
 
 static int __init nvmet_vhost_init(void)
