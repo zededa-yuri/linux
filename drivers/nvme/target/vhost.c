@@ -676,6 +676,8 @@ nvmet_vhost_set_endpoint(struct nvmet_vhost_ctrl *ctrl,
 	int num_queues;
 	int ret = 0;
 
+	return 0;
+
 	//TODO: Determine if any locking is needed
 	if (IS_ERR(ctrl)) {
 	  pr_err("Pointer to ctrl is error %ld\n", PTR_ERR(ctrl));
