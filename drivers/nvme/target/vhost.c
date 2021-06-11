@@ -1273,13 +1273,52 @@ static void vhost_scsi_aborted_task(struct se_cmd *se_cmd)
 	return;
 }
 
+/* We will figure out later if more then one protocol is needed */
+#define NVME_PROTOCOL_DEFAULT 0
 static struct se_wwn *
 vhost_scsi_make_tport(struct target_fabric_configfs *tf,
 		     struct config_group *group,
 		     const char *name)
 {
-	BUG();
-	return NULL;
+	struct vhost_scsi_tport *tport;
+	char *ptr;
+	u64 wwpn = 0;
+
+	tport = kzalloc(sizeof(struct vhost_scsi_tport), GFP_KERNEL);
+	if (!tport) {
+		pr_err("Unable to allocate struct vhost_scsi_tport");
+		return ERR_PTR(-ENOMEM);
+	}
+	tport->tport_wwpn = wwpn;
+	/*
+	 * Determine the emulated Protocol Identifier and Target Port Name
+	 * based on the incoming configfs directory name.
+	 */
+	ptr = strstr(name, "nvme.");
+	if (ptr) {
+		tport->tport_proto_id = NVME_PROTOCOL_DEFAULT;
+		goto check_len;
+	}
+
+	pr_err("Unable to locate prefix for emulated Target Port:"
+			" %s\n", name);
+	kfree(tport);
+	return ERR_PTR(-EINVAL);
+
+check_len:
+	if (strlen(name) >= VHOST_NVME_NAMELEN) {
+		pr_err("Emulated %s exceeds"
+			" max: %d\n", name, VHOST_NVME_NAMELEN);
+		kfree(tport);
+		return ERR_PTR(-EINVAL);
+	}
+	snprintf(&tport->tport_name[0], VHOST_NVME_NAMELEN, "%s", name);
+
+	
+	pr_debug("TCM_VHost_ConfigFS: Allocated emulated Target"
+		" default_proto, Address: %s\n", name);
+
+	return &tport->tport_wwn;
 }
 
 static void vhost_scsi_drop_tport(struct se_wwn *wwn)
