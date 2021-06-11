@@ -10,9 +10,12 @@
 #include <linux/kthread.h>
 #include "../../vhost/vhost.h"
 #include "nvmet.h"
+#include <target/target_core_base.h>
+#include <target/target_core_fabric.h>
 
 #define NVMET_VHOST_AQ_DEPTH		256
 #define NVMET_VHOST_MAX_SEGMENTS	32
+#define VHOST_NVME_NAMELEN              256
 
 enum NvmeCcShift {
 	CC_MPS_SHIFT	= 7,
@@ -99,6 +102,7 @@ struct nvmet_vhost_sq {
 };
 
 struct nvmet_vhost_ctrl {
+	char vs_vhost_wwpn[TRANSPORT_IQN_LEN];
 	struct vhost_dev vdev;
 	struct nvmet_vhost_ctrl_eventfd *eventfd;
 
@@ -1149,9 +1153,78 @@ static struct miscdevice nvmet_vhost_misc = {
 	&nvmet_vhost_fops,
 };
 
+struct vhost_scsi_tport {
+	/* SCSI protocol the tport is providing */
+	u8 tport_proto_id;
+	/* Binary World Wide unique Port Name for Vhost Target port */
+	u64 tport_wwpn;
+	/* ASCII formatted WWPN for Vhost Target port */
+	char tport_name[VHOST_NVME_NAMELEN];
+	/* Returned by vhost_scsi_make_tport() */
+	struct se_wwn tport_wwn;
+};
+
+struct vhost_scsi_tpg {
+	/* Vhost port target portal group tag for TCM */
+	u16 tport_tpgt;
+	/* Used to track number of TPG Port/Lun Links wrt to explict I_T Nexus shutdown */
+	int tv_tpg_port_count;
+	/* Used for vhost_scsi device reference to tpg_nexus, protected by tv_tpg_mutex */
+	int tv_tpg_vhost_count;
+	/* Used for enabling T10-PI with legacy devices */
+	int tv_fabric_prot_type;
+	/* list for vhost_scsi_list */
+	struct list_head tv_tpg_list;
+	/* Used to protect access for tpg_nexus */
+	struct mutex tv_tpg_mutex;
+	/* Pointer to the TCM VHost I_T Nexus for this TPG endpoint */
+	struct vhost_scsi_nexus *tpg_nexus;
+	/* Pointer back to vhost_scsi_tport */
+	struct vhost_scsi_tport *tport;
+	/* Returned by vhost_scsi_make_tpg() */
+	struct se_portal_group se_tpg;
+
+	/* XXX: original comment, nothing is protected yet:
+	 * Pointer back to vhost_scsi, protected by tv_tpg_mutex */
+	struct nvmet_vhost_ctrl *nvmet_ctrl;
+};
+
+static char *vhost_vhost_get_fabric_wwn(struct se_portal_group *se_tpg)
+{
+	/* XXX: implement */
+	BUG();
+	/* struct vhost_nvme_tpg *tpg = container_of(se_tpg, */
+	/* 			struct vhost_nvme_tpg, se_tpg); */
+	/* struct vhost_scsi_tport *tport = tpg->tport; */
+
+	/* return &tport->tport_name[0]; */
+}
+
+static const struct target_core_fabric_ops vhost_nvme_ops = {
+	.module				= THIS_MODULE,
+	.fabric_name			= "vhost-nvme",
+	.tpg_get_wwn =  vhost_vhost_get_fabric_wwn,
+};
+
 static int __init nvmet_vhost_init(void)
 {
-	return misc_register(&nvmet_vhost_misc);
+	int ret;
+
+	ret = misc_register(&nvmet_vhost_misc);
+	if (ret)
+		return ret;
+
+	ret = target_register_template(&vhost_nvme_ops);
+	if (ret < 0) {
+		pr_err("failed to register vhost-nvme operations\n");
+		goto out_deregister;
+	}
+
+	return 0;
+	
+ out_deregister:
+	pr_err("deregistering vhost-nvme");
+	return ret;
 }
 module_init(nvmet_vhost_init);
 
