@@ -700,8 +700,9 @@ nvmet_vhost_set_endpoint(struct nvmet_vhost_ctrl *ctrl,
 	ctrl->num_queues = 1;
 
 	/* ctrl->num_queues = subsys->max_qid + 1; */
-	ctrl->ctrl->opaque = ctrl;
-	ctrl->ctrl->start = nvmet_vhost_start_ctrl;
+	/* ctrl->ctrl = nvmet_alloc_ctrl(subsys, c->vhost_wwpn); */
+	/* ctrl->ctrl->opaque = ctrl; */
+	/* ctrl->ctrl->start = nvmet_vhost_start_ctrl; */
 	/* ctrl->parse_extra_admin_cmd = nvmet_vhost_parse_admin_cmd; */
 
 	num_queues = ctrl->num_queues;
