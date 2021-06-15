@@ -1077,7 +1077,8 @@ static long nvmet_vhost_ioctl(struct file *f, unsigned int ioctl,
 
 	switch (ioctl) {
 	case VHOST_NVME_SET_ENDPOINT:
-	  pr_err("%d, ctrl=%p", __LINE__, ctrl);
+		return -1;
+		pr_err("%d, ctrl=%p", __LINE__, ctrl);
 		if (copy_from_user(&conf, argp, sizeof(conf)))
 			return -EFAULT;
 
