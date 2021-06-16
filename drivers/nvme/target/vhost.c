@@ -1159,39 +1159,39 @@ static struct miscdevice nvmet_vhost_misc = {
  * bother to rename the functions and structures. It is just easy for
  * me to find the origin of the function
  */
-struct vhost_scsi_tport {
-	/* SCSI protocol the tport is providing */
+struct vhost_nvme_tport {
+	/* NVME protocol the tport is providing */
 	u8 tport_proto_id;
 	/* Binary World Wide unique Port Name for Vhost Target port */
 	u64 tport_wwpn;
 	/* ASCII formatted WWPN for Vhost Target port */
 	char tport_name[VHOST_NVME_NAMELEN];
-	/* Returned by vhost_scsi_make_tport() */
+	/* Returned by vhost_nvme_make_tport() */
 	struct se_wwn tport_wwn;
 };
 
-struct vhost_scsi_tpg {
+struct vhost_nvme_tpg {
 	/* Vhost port target portal group tag for TCM */
 	u16 tport_tpgt;
 	/* Used to track number of TPG Port/Lun Links wrt to explict I_T Nexus shutdown */
 	int tv_tpg_port_count;
-	/* Used for vhost_scsi device reference to tpg_nexus, protected by tv_tpg_mutex */
+	/* Used for vhost_nvme device reference to tpg_nexus, protected by tv_tpg_mutex */
 	int tv_tpg_vhost_count;
 	/* Used for enabling T10-PI with legacy devices */
 	int tv_fabric_prot_type;
-	/* list for vhost_scsi_list */
+	/* list for vhost_nvme_list */
 	struct list_head tv_tpg_list;
 	/* Used to protect access for tpg_nexus */
 	struct mutex tv_tpg_mutex;
 	/* Pointer to the TCM VHost I_T Nexus for this TPG endpoint */
-	struct vhost_scsi_nexus *tpg_nexus;
-	/* Pointer back to vhost_scsi_tport */
-	struct vhost_scsi_tport *tport;
-	/* Returned by vhost_scsi_make_tpg() */
+	struct vhost_nvme_nexus *tpg_nexus;
+	/* Pointer back to vhost_nvme_tport */
+	struct vhost_nvme_tport *tport;
+	/* Returned by vhost_nvme_make_tpg() */
 	struct se_portal_group se_tpg;
 
 	/* XXX: original comment, nothing is protected yet:
-	 * Pointer back to vhost_scsi, protected by tv_tpg_mutex */
+	 * Pointer back to vhost_nvme, protected by tv_tpg_mutex */
 	struct nvmet_vhost_ctrl *nvmet_ctrl;
 };
 
@@ -1201,7 +1201,7 @@ static char *vhost_vhost_get_fabric_wwn(struct se_portal_group *se_tpg)
 	BUG();
 	/* struct vhost_nvme_tpg *tpg = container_of(se_tpg, */
 	/* 			struct vhost_nvme_tpg, se_tpg); */
-	/* struct vhost_scsi_tport *tport = tpg->tport; */
+	/* struct vhost_nvme_tport *tport = tpg->tport; */
 
 	/* return &tport->tport_name[0]; */
 }
@@ -1209,67 +1209,67 @@ static char *vhost_vhost_get_fabric_wwn(struct se_portal_group *se_tpg)
 static u16 vhost_nvme_get_tpgt(struct se_portal_group *se_tpg)
 {
 	BUG();
-	/* struct vhost_scsi_tpg *tpg = container_of(se_tpg, */
-	/* 			struct vhost_scsi_tpg, se_tpg); */
+	/* struct vhost_nvme_tpg *tpg = container_of(se_tpg, */
+	/* 			struct vhost_nvme_tpg, se_tpg); */
 	/* return tpg->tport_tpgt; */
 }
 
-static int vhost_scsi_check_true(struct se_portal_group *se_tpg)
+static int vhost_nvme_check_true(struct se_portal_group *se_tpg)
 {
 	return 1;
 }
 
-static int vhost_scsi_check_false(struct se_portal_group *se_tpg)
+static int vhost_nvme_check_false(struct se_portal_group *se_tpg)
 {
 	return 0;
 }
 
-static u32 vhost_scsi_tpg_get_inst_index(struct se_portal_group *se_tpg)
+static u32 vhost_nvme_tpg_get_inst_index(struct se_portal_group *se_tpg)
 {
 	return 1;
 }
 
-static void vhost_scsi_release_cmd(struct se_cmd *se_cmd)
+static void vhost_nvme_release_cmd(struct se_cmd *se_cmd)
 {
 	BUG();
 }
 
-static u32 vhost_scsi_sess_get_index(struct se_session *se_sess)
+static u32 vhost_nvme_sess_get_index(struct se_session *se_sess)
 {
 	return 0;
 }
 
-static int vhost_scsi_write_pending(struct se_cmd *se_cmd)
+static int vhost_nvme_write_pending(struct se_cmd *se_cmd)
 {
 	BUG();
 }
 
-static void vhost_scsi_set_default_node_attrs(struct se_node_acl *nacl)
+static void vhost_nvme_set_default_node_attrs(struct se_node_acl *nacl)
 {
 	return;
 }
 
-static int vhost_scsi_get_cmd_state(struct se_cmd *se_cmd)
+static int vhost_nvme_get_cmd_state(struct se_cmd *se_cmd)
 {
 	return 0;
 }
 
-static int vhost_scsi_queue_data_in(struct se_cmd *se_cmd)
+static int vhost_nvme_queue_data_in(struct se_cmd *se_cmd)
 {
 	BUG();
 }
 
-static int vhost_scsi_queue_status(struct se_cmd *se_cmd)
+static int vhost_nvme_queue_status(struct se_cmd *se_cmd)
 {
 	BUG();
 }
 
-static void vhost_scsi_queue_tm_rsp(struct se_cmd *se_cmd)
+static void vhost_nvme_queue_tm_rsp(struct se_cmd *se_cmd)
 {
 	return;
 }
 
-static void vhost_scsi_aborted_task(struct se_cmd *se_cmd)
+static void vhost_nvme_aborted_task(struct se_cmd *se_cmd)
 {
 	return;
 }
@@ -1277,17 +1277,17 @@ static void vhost_scsi_aborted_task(struct se_cmd *se_cmd)
 /* We will figure out later if more then one protocol is needed */
 #define NVME_PROTOCOL_DEFAULT 0
 static struct se_wwn *
-vhost_scsi_make_tport(struct target_fabric_configfs *tf,
+vhost_nvme_make_tport(struct target_fabric_configfs *tf,
 		     struct config_group *group,
 		     const char *name)
 {
-	struct vhost_scsi_tport *tport;
+	struct vhost_nvme_tport *tport;
 	char *ptr;
 	u64 wwpn = 0;
 
-	tport = kzalloc(sizeof(struct vhost_scsi_tport), GFP_KERNEL);
+	tport = kzalloc(sizeof(struct vhost_nvme_tport), GFP_KERNEL);
 	if (!tport) {
-		pr_err("Unable to allocate struct vhost_scsi_tport");
+		pr_err("Unable to allocate struct vhost_nvme_tport");
 		return ERR_PTR(-ENOMEM);
 	}
 	tport->tport_wwpn = wwpn;
@@ -1322,25 +1322,25 @@ check_len:
 	return &tport->tport_wwn;
 }
 
-static void vhost_scsi_drop_tport(struct se_wwn *wwn)
+static void vhost_nvme_drop_tport(struct se_wwn *wwn)
 {
 	BUG();
 }
 
 static struct se_portal_group *
-vhost_scsi_make_tpg(struct se_wwn *wwn,
+vhost_nvme_make_tpg(struct se_wwn *wwn,
 		   const char *name)
 {
 	BUG();
 	return NULL;
 }
 
-static void vhost_scsi_drop_tpg(struct se_portal_group *se_tpg)
+static void vhost_nvme_drop_tpg(struct se_portal_group *se_tpg)
 {
 	BUG();
 }
 
-static int vhost_scsi_check_stop_free(struct se_cmd *se_cmd)
+static int vhost_nvme_check_stop_free(struct se_cmd *se_cmd)
 {
 	BUG();
 	return 0;
@@ -1353,29 +1353,29 @@ static const struct target_core_fabric_ops vhost_nvme_ops = {
 	.tpg_get_wwn                    = vhost_vhost_get_fabric_wwn,
 	.tpg_get_tag			= vhost_nvme_get_tpgt,
 
-	.tpg_check_demo_mode		= vhost_scsi_check_true,
-	.tpg_check_demo_mode_cache	= vhost_scsi_check_true,
-	.tpg_check_demo_mode_write_protect = vhost_scsi_check_false,
-	.tpg_check_prod_mode_write_protect = vhost_scsi_check_false,
-	.tpg_get_inst_index		= vhost_scsi_tpg_get_inst_index,
-	.release_cmd			= vhost_scsi_release_cmd,
-	.sess_get_index			= vhost_scsi_sess_get_index,
-	.write_pending			= vhost_scsi_write_pending,
-	.set_default_node_attributes	= vhost_scsi_set_default_node_attrs,
-	.get_cmd_state			= vhost_scsi_get_cmd_state,
-	.queue_data_in			= vhost_scsi_queue_data_in,
-	.queue_status			= vhost_scsi_queue_status,
-	.queue_tm_rsp			= vhost_scsi_queue_tm_rsp,
-	.aborted_task			= vhost_scsi_aborted_task,
-	.check_stop_free		= vhost_scsi_check_stop_free,
+	.tpg_check_demo_mode		= vhost_nvme_check_true,
+	.tpg_check_demo_mode_cache	= vhost_nvme_check_true,
+	.tpg_check_demo_mode_write_protect = vhost_nvme_check_false,
+	.tpg_check_prod_mode_write_protect = vhost_nvme_check_false,
+	.tpg_get_inst_index		= vhost_nvme_tpg_get_inst_index,
+	.release_cmd			= vhost_nvme_release_cmd,
+	.sess_get_index			= vhost_nvme_sess_get_index,
+	.write_pending			= vhost_nvme_write_pending,
+	.set_default_node_attributes	= vhost_nvme_set_default_node_attrs,
+	.get_cmd_state			= vhost_nvme_get_cmd_state,
+	.queue_data_in			= vhost_nvme_queue_data_in,
+	.queue_status			= vhost_nvme_queue_status,
+	.queue_tm_rsp			= vhost_nvme_queue_tm_rsp,
+	.aborted_task			= vhost_nvme_aborted_task,
+	.check_stop_free		= vhost_nvme_check_stop_free,
 
 	/*
 	 * Setup callers for generic logic in target_core_fabric_configfs.c
 	 */
-	.fabric_make_wwn		= vhost_scsi_make_tport,
-	.fabric_drop_wwn		= vhost_scsi_drop_tport,
-	.fabric_make_tpg		= vhost_scsi_make_tpg,
-	.fabric_drop_tpg		= vhost_scsi_drop_tpg,
+	.fabric_make_wwn		= vhost_nvme_make_tport,
+	.fabric_drop_wwn		= vhost_nvme_drop_tport,
+	.fabric_make_tpg		= vhost_nvme_make_tpg,
+	.fabric_drop_tpg		= vhost_nvme_drop_tpg,
 	
 };
 
