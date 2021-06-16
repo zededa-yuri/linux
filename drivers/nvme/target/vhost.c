@@ -1333,6 +1333,24 @@ static DEFINE_MUTEX(vhost_nvme_mutex);
 static LIST_HEAD(vhost_nvme_list);
 #define VHOST_NVME_MAX_TARGET 256
 
+static ssize_t vhost_nvme_tpg_nexus_show(struct config_item *item, char *page)
+{
+	return 0;
+}
+
+static ssize_t vhost_nvme_tpg_nexus_store(struct config_item *item,
+		const char *page, size_t count)
+{
+	return 0;
+}
+
+CONFIGFS_ATTR(vhost_nvme_tpg_, nexus);
+
+static struct configfs_attribute *vhost_nvme_tpg_attrs[] = {
+	&vhost_nvme_tpg_attr_nexus,
+	NULL,
+};
+
 static struct se_portal_group *
 vhost_nvme_make_tpg(struct se_wwn *wwn,
 		   const char *name)
@@ -1414,6 +1432,7 @@ static const struct target_core_fabric_ops vhost_nvme_ops = {
 	.fabric_make_tpg		= vhost_nvme_make_tpg,
 	.fabric_drop_tpg		= vhost_nvme_drop_tpg,
 	
+	.tfc_tpg_base_attrs		= vhost_nvme_tpg_attrs,
 };
 
 static int __init nvmet_vhost_init(void)
