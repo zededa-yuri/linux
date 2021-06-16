@@ -1170,6 +1170,12 @@ struct vhost_nvme_tport {
 	struct se_wwn tport_wwn;
 };
 
+/*XXX: reuse vhost_scsi_nexus?? */
+struct vhost_nvme_nexus {
+	/* Pointer to TCM session for I_T Nexus */
+	struct se_session *tvn_se_sess;
+};
+
 struct vhost_nvme_tpg {
 	/* Vhost port target portal group tag for TCM */
 	u16 tport_tpgt;
@@ -1346,6 +1352,37 @@ static int vhost_nvme_drop_nexus(struct vhost_nvme_tpg *tpg)
 static int vhost_nvme_make_nexus(struct vhost_nvme_tpg *tpg,
 				const char *name)
 {
+	struct vhost_nvme_nexus *tv_nexus;
+
+	mutex_lock(&tpg->tv_tpg_mutex);
+	if (tpg->tpg_nexus) {
+		mutex_unlock(&tpg->tv_tpg_mutex);
+		pr_debug("tpg->tpg_nexus already exists\n");
+		return -EEXIST;
+	}
+
+	tv_nexus = kzalloc(sizeof(*tv_nexus), GFP_KERNEL);
+	if (!tv_nexus) {
+		mutex_unlock(&tpg->tv_tpg_mutex);
+		pr_err("Unable to allocate struct vhost_scsi_nexus\n");
+		return -ENOMEM;
+	}
+	/*
+	 * Since we are running in 'demo mode' this call with generate a
+	 * struct se_node_acl for the vhost_scsi struct se_portal_group with
+	 * the SCSI Initiator port name of the passed configfs group 'name'.
+	 */
+	tv_nexus->tvn_se_sess = target_setup_session(&tpg->se_tpg, 0, 0,
+					TARGET_PROT_DIN_PASS | TARGET_PROT_DOUT_PASS,
+					(unsigned char *)name, tv_nexus, NULL);
+	if (IS_ERR(tv_nexus->tvn_se_sess)) {
+		mutex_unlock(&tpg->tv_tpg_mutex);
+		kfree(tv_nexus);
+		return -ENOMEM;
+	}
+	tpg->tpg_nexus = tv_nexus;
+
+	mutex_unlock(&tpg->tv_tpg_mutex);
 	return 0;
 }
 
