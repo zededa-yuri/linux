@@ -1193,6 +1193,7 @@ struct vhost_nvme_tpg {
 	/* XXX: original comment, nothing is protected yet:
 	 * Pointer back to vhost_nvme, protected by tv_tpg_mutex */
 	struct nvmet_vhost_ctrl *nvmet_ctrl;
+	struct list_head tmf_queue;
 };
 
 static char *vhost_vhost_get_fabric_wwn(struct se_portal_group *se_tpg)
@@ -1327,12 +1328,48 @@ static void vhost_nvme_drop_tport(struct se_wwn *wwn)
 	BUG();
 }
 
+/* XXX not sure if needed */
+static DEFINE_MUTEX(vhost_nvme_mutex);
+static LIST_HEAD(vhost_nvme_list);
+#define VHOST_NVME_MAX_TARGET 256
+
 static struct se_portal_group *
 vhost_nvme_make_tpg(struct se_wwn *wwn,
 		   const char *name)
 {
-	BUG();
-	return NULL;
+	struct vhost_nvme_tport *tport = container_of(wwn,
+			struct vhost_nvme_tport, tport_wwn);
+
+	struct vhost_nvme_tpg *tpg;
+	u16 tpgt;
+	int ret;
+
+	if (strstr(name, "tpgt_") != name)
+		return ERR_PTR(-EINVAL);
+	if (kstrtou16(name + 5, 10, &tpgt) || tpgt >= VHOST_NVME_MAX_TARGET)
+		return ERR_PTR(-EINVAL);
+
+	tpg = kzalloc(sizeof(*tpg), GFP_KERNEL);
+	if (!tpg) {
+		pr_err("Unable to allocate struct vhost_nvme_tpg");
+		return ERR_PTR(-ENOMEM);
+	}
+	mutex_init(&tpg->tv_tpg_mutex);
+	INIT_LIST_HEAD(&tpg->tv_tpg_list);
+	INIT_LIST_HEAD(&tpg->tmf_queue);
+	tpg->tport = tport;
+	tpg->tport_tpgt = tpgt;
+
+	ret = core_tpg_register(wwn, &tpg->se_tpg, tport->tport_proto_id);
+	if (ret < 0) {
+		kfree(tpg);
+		return NULL;
+	}
+	mutex_lock(&vhost_nvme_mutex);
+	list_add_tail(&tpg->tv_tpg_list, &vhost_nvme_list);
+	mutex_unlock(&vhost_nvme_mutex);
+
+	return &tpg->se_tpg;
 }
 
 static void vhost_nvme_drop_tpg(struct se_portal_group *se_tpg)
