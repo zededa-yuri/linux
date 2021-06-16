@@ -1204,21 +1204,19 @@ struct vhost_nvme_tpg {
 
 static char *vhost_vhost_get_fabric_wwn(struct se_portal_group *se_tpg)
 {
-	/* XXX: implement */
-	BUG();
-	/* struct vhost_nvme_tpg *tpg = container_of(se_tpg, */
-	/* 			struct vhost_nvme_tpg, se_tpg); */
-	/* struct vhost_nvme_tport *tport = tpg->tport; */
+	struct vhost_nvme_tpg *tpg = container_of(se_tpg,
+				struct vhost_nvme_tpg, se_tpg);
+	struct vhost_nvme_tport *tport = tpg->tport;
 
-	/* return &tport->tport_name[0]; */
+	pr_debug("Returning fabric name %s", tport->tport_name);
+	return &tport->tport_name[0];
 }
 
 static u16 vhost_nvme_get_tpgt(struct se_portal_group *se_tpg)
 {
-	BUG();
-	/* struct vhost_nvme_tpg *tpg = container_of(se_tpg, */
-	/* 			struct vhost_nvme_tpg, se_tpg); */
-	/* return tpg->tport_tpgt; */
+	struct vhost_nvme_tpg *tpg = container_of(se_tpg,
+				struct vhost_nvme_tpg, se_tpg);
+	return tpg->tport_tpgt;
 }
 
 static int vhost_nvme_check_true(struct se_portal_group *se_tpg)
