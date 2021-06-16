@@ -20,5 +20,3 @@ nvme-fcloop-y	+= fcloop.o
 nvmet-tcp-y	+= tcp.o
 nvmet-$(CONFIG_TRACING)	+= trace.o
 nvme-vhost-y	+= vhost.o
-
-obj-y           += vhost_nvme/
