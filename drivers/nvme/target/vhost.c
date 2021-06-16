@@ -1338,10 +1338,71 @@ static ssize_t vhost_nvme_tpg_nexus_show(struct config_item *item, char *page)
 	return 0;
 }
 
+static int vhost_nvme_drop_nexus(struct vhost_nvme_tpg *tpg)
+{
+	return 0;
+}
+
+static int vhost_nvme_make_nexus(struct vhost_nvme_tpg *tpg,
+				const char *name)
+{
+	return 0;
+}
+
 static ssize_t vhost_nvme_tpg_nexus_store(struct config_item *item,
 		const char *page, size_t count)
 {
-	return 0;
+	struct se_portal_group *se_tpg = to_tpg(item);
+	struct vhost_nvme_tpg *tpg = container_of(se_tpg,
+				struct vhost_nvme_tpg, se_tpg);
+	struct vhost_nvme_tport *tport_wwn = tpg->tport;
+	unsigned char i_port[VHOST_NVME_NAMELEN], *ptr, *port_ptr;
+	int ret;
+	/*
+	 * Shutdown the active I_T nexus if 'NULL' is passed..
+	 */
+	if (!strncmp(page, "NULL", 4)) {
+		ret = vhost_nvme_drop_nexus(tpg);
+		return (!ret) ? count : ret;
+	}
+	/*
+	 * Otherwise make sure the passed virtual Initiator port WWN matches
+	 * the fabric protocol_id set in vhost_nvme_make_tport(), and call
+	 * vhost_nvme_make_nexus().
+	 */
+	if (strlen(page) >= VHOST_NVME_NAMELEN) {
+		pr_err("Emulated NVME Address: %s, exceeds"
+				" max: %d\n", page, VHOST_NVME_NAMELEN);
+		return -EINVAL;
+	}
+	snprintf(&i_port[0], VHOST_NVME_NAMELEN, "%s", page);
+
+	ptr = strstr(i_port, "nvme.");
+	if (ptr) {
+		if (tport_wwn->tport_proto_id != NVME_PROTOCOL_DEFAULT) {
+			pr_err("Passed NVME Initiator Port %s does not"
+			       " match target port protoid\n", i_port);
+			return -EINVAL;
+		}
+		port_ptr = &i_port[0];
+		goto check_newline;
+	}
+
+	pr_err("Unable to locate prefix for emulated Initiator Port:"
+			" %s\n", i_port);
+	return -EINVAL;
+	/*
+	 * Clear any trailing newline for the NAA WWN
+	 */
+check_newline:
+	if (i_port[strlen(i_port)-1] == '\n')
+		i_port[strlen(i_port)-1] = '\0';
+
+	ret = vhost_nvme_make_nexus(tpg, port_ptr);
+	if (ret < 0)
+		return ret;
+
+	return count;
 }
 
 CONFIGFS_ATTR(vhost_nvme_tpg_, nexus);
