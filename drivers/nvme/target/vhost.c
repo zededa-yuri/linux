@@ -1136,10 +1136,30 @@ static const struct file_operations nvmet_vhost_fops = {
 };
 
 
-static int nvmet_vhost_add_port(struct nvmet_port *nport)
+static void nvmet_vhost_accept_work(struct work_struct *w)
 {
 	BUG();
-	return 0;	
+}
+
+struct nvmet_tcp_port {
+	struct work_struct	accept_work;
+	struct nvmet_port *nport;
+};
+
+static int nvmet_vhost_add_port(struct nvmet_port *nport)
+{
+	struct nvmet_tcp_port *port;
+
+	port = kzalloc(sizeof(*port), GFP_KERNEL);
+	if (!port)
+		return -ENOMEM;
+
+	port->nport = nport;
+	nport->priv = port;
+	INIT_WORK(&port->accept_work, nvmet_vhost_accept_work);
+	BUG_ON(port->nport->inline_data_size < 0);
+
+	return 0;
 }	
 
 static void nvmet_vhost_remove_port(struct nvmet_port *nport)
