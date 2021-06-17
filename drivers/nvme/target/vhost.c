@@ -121,6 +121,13 @@ struct nvmet_vhost_ctrl {
 	u32 page_size;
 };
 
+struct nvmet_vhost_port {
+	struct nvmet_port *nport;
+};
+
+/* XXX: make this a list */
+static struct nvmet_vhost_port *vhost_port = NULL;
+
 static int nvmet_vhost_read(struct vhost_dev *vdev, u64 guest_pa,
 		void *buf, uint32_t size)
 {
@@ -676,6 +683,11 @@ nvmet_vhost_set_endpoint(struct nvmet_vhost_ctrl *ctrl,
 	int num_queues;
 	int ret = 0;
 
+	if (vhost_port == NULL) {
+		pr_err("Port not found\n");
+		return -EINVAL;
+	}
+
 	//TODO: Determine if any locking is needed
 	if (IS_ERR(ctrl)) {
 	  pr_err("Pointer to ctrl is error %ld\n", PTR_ERR(ctrl));
@@ -1120,8 +1132,45 @@ static const struct file_operations nvmet_vhost_fops = {
 	.llseek		= noop_llseek,
 };
 
-#if 0
-static const struct nvmet_fabrics_ops nvmet_tcp_ops = {
+static int nvmet_vhost_add_port(struct nvmet_port *nport)
+{
+	struct nvmet_vhost_port *port;
+
+	port = kzalloc(sizeof(*port), GFP_KERNEL);
+	if (!port)
+		return -ENOMEM;
+
+
+	port->nport = nport;
+	nport->priv = port;
+	BUG_ON(port->nport->inline_data_size < 0);
+
+	vhost_port = port;
+	return 0;
+}
+
+static void nvmet_vhost_remove_port(struct nvmet_port *nport)
+{
+	BUG();
+}
+
+static void nvmet_vhost_delete_ctrl(struct nvmet_ctrl *ctrl)
+{
+	BUG();
+}
+
+static u16 nvmet_vhost_install_queue(struct nvmet_sq *sq)
+{
+	BUG();
+}
+
+static void nvmet_vhost_disc_port_addr(struct nvmet_req *req,
+		struct nvmet_port *nport, char *traddr)
+{
+	BUG();
+}
+
+static const struct nvmet_fabrics_ops nvmet_vhost_fabric_ops = {
 	.owner			= THIS_MODULE,
 	.type			= NVMF_TRTYPE_VHOST,
 	.msdbd			= 1,
@@ -1132,7 +1181,6 @@ static const struct nvmet_fabrics_ops nvmet_tcp_ops = {
 	.install_queue		= nvmet_vhost_install_queue,
 	.disc_traddr		= nvmet_vhost_disc_port_addr,
 };
-#endif
 
 static struct miscdevice nvmet_vhost_misc = {
 	MISC_DYNAMIC_MINOR,
@@ -1142,7 +1190,22 @@ static struct miscdevice nvmet_vhost_misc = {
 
 static int __init nvmet_vhost_init(void)
 {
-	return misc_register(&nvmet_vhost_misc);
+	int ret;
+
+	ret = misc_register(&nvmet_vhost_misc);
+	if (ret) {
+		pr_err("Failed to register nvmet vhost device\n");
+		return ret;
+	}
+
+	ret = nvmet_register_transport(&nvmet_vhost_fabric_ops);
+	if (ret)
+		goto out_deregister;
+
+ out_deregister:
+	/* XXX: actually deregister */
+	pr_err("deregistering vhost-nvme");
+	return ret;
 }
 module_init(nvmet_vhost_init);
 
