@@ -1009,6 +1009,7 @@ static void nvmet_vhost_clear_ctrl(struct nvmet_vhost_ctrl *ctrl)
 	nvmet_ctrl_put(ctrl->ctrl);
 }
 
+__maybe_unused
 static void nvmet_vhost_clear_eventfd(struct nvmet_vhost_ctrl *ctrl)
 {
 	int i;
@@ -1030,7 +1031,7 @@ static int nvmet_vhost_release(struct inode *inode, struct file *f)
 		return -EINVAL;
 	}
 
-	nvmet_vhost_clear_eventfd(ctrl);
+	// nvmet_vhost_clear_eventfd(ctrl);
 	// nvmet_vhost_clear_ctrl(ctrl);
 
 	vhost_dev_stop(&ctrl->vdev);
