@@ -1135,8 +1135,35 @@ static const struct file_operations nvmet_vhost_fops = {
 	.llseek		= noop_llseek,
 };
 
-#if 0
-static const struct nvmet_fabrics_ops nvmet_tcp_ops = {
+
+static int nvmet_vhost_add_port(struct nvmet_port *nport)
+{
+	BUG();
+	return 0;	
+}	
+
+static void nvmet_vhost_remove_port(struct nvmet_port *nport)
+{
+	BUG();
+}
+
+static void nvmet_vhost_delete_ctrl(struct nvmet_ctrl *ctrl)
+{
+	BUG();
+}
+
+static u16 nvmet_vhost_install_queue(struct nvmet_sq *sq)
+{
+	BUG();
+}
+
+static void nvmet_vhost_disc_port_addr(struct nvmet_req *req,
+		struct nvmet_port *nport, char *traddr)
+{
+	BUG();
+}
+
+static const struct nvmet_fabrics_ops nvmet_vhost_fabric_ops = {
 	.owner			= THIS_MODULE,
 	.type			= NVMF_TRTYPE_VHOST,
 	.msdbd			= 1,
@@ -1147,7 +1174,6 @@ static const struct nvmet_fabrics_ops nvmet_tcp_ops = {
 	.install_queue		= nvmet_vhost_install_queue,
 	.disc_traddr		= nvmet_vhost_disc_port_addr,
 };
-#endif
 
 static struct miscdevice nvmet_vhost_misc = {
 	MISC_DYNAMIC_MINOR,
@@ -1539,6 +1565,10 @@ static int __init nvmet_vhost_init(void)
 	if (ret)
 		return ret;
 
+	ret = nvmet_register_transport(&nvmet_vhost_fabric_ops);
+	if (ret)
+		goto out_deregister;
+	
 	ret = target_register_template(&vhost_nvme_ops);
 	if (ret < 0) {
 		pr_err("failed to register vhost-nvme operations\n");
