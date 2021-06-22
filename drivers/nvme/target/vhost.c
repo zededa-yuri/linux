@@ -675,6 +675,41 @@ static int nvmet_vhost_parse_admin_cmd(struct nvmet_req *req)
 	return -1;
 }
 
+
+const char hardcode_subsys_nqn[] =
+	"nqn.2014-08.org.nvmexpress:NVMf:uuid:e097a503-d9d5-4b6e-870a-0d87c5716c99";
+const char hardcode_host_nqn[] =
+	"nqn.2014-08.org.nvmexpress:NVMf:uuid:e097a503-d9d5-4b6e-870a-0d87c5716c9a";
+
+static const struct nvmet_fabrics_ops nvmet_vhost_fabric_ops;
+struct nvmet_ctrl *nvmet_vhost_alloc_ctr(void)
+{
+	struct nvmet_req req;
+	struct nvme_completion	cqe;
+	struct nvmet_ctrl *ctrl;
+	int ret;
+
+	/* Fake request */
+	memset(&req, 0, sizeof(req));
+	req.cqe = &cqe;
+	req.port = vhost_port->nport;
+	req.ops = &nvmet_vhost_fabric_ops;
+
+
+	ret = nvmet_alloc_ctrl(hardcode_subsys_nqn,
+			       hardcode_host_nqn,
+			       &req,
+			       0,
+			       &ctrl);
+
+	if (ret) {
+		pr_err("failed to allocate nvmet_ctrl: %d\n", ret);
+		return ERR_PTR(ret);
+	}
+
+	return ctrl;
+}
+
 static int
 nvmet_vhost_set_endpoint(struct nvmet_vhost_ctrl *ctrl,
 			 struct vhost_nvme_target *nvme_tgt)
@@ -693,10 +728,10 @@ nvmet_vhost_set_endpoint(struct nvmet_vhost_ctrl *ctrl,
 	  pr_err("Pointer to ctrl is error %ld\n", PTR_ERR(ctrl));
 		return -EINVAL;
 	}
-	tgt_ctrl = ctrl->ctrl;
-
+	tgt_ctrl = nvmet_vhost_alloc_ctr();
 	if (IS_ERR(tgt_ctrl)) {
-		return -EINVAL;
+		pr_err("Failed to allocate target ctrl\n");
+		return PTR_ERR(tgt_ctrl);
 	}
 
 	ctrl->cntlid = tgt_ctrl->cntlid;
