@@ -1128,6 +1128,14 @@ static void nvmet_start_ctrl(struct nvmet_ctrl *ctrl)
 	 */
 	if (ctrl->kato)
 		mod_delayed_work(system_wq, &ctrl->ka_work, ctrl->kato * HZ);
+
+	if (ctrl->ops->start_ctrl) {
+		int ret = ctrl->ops->start_ctrl(ctrl);
+		if (ret) {
+			pr_err("failed to start fabric ctrl\n");
+			/* XXX: cleanup */
+		}
+	}
 }
 
 static void nvmet_clear_ctrl(struct nvmet_ctrl *ctrl)

@@ -207,6 +207,10 @@ struct nvmet_ctrl {
 	u64			err_counter;
 	struct nvme_error_slot	slots[NVMET_ERROR_LOG_SLOTS];
 	bool			pi_support;
+
+	/* TODO: this will go away once we use container_of for
+	 * obtaining nvmet_vhost_ctrl */
+	void                    *private;
 };
 
 struct nvmet_subsys_model {
@@ -299,6 +303,7 @@ struct nvmet_fabrics_ops {
 	void (*queue_response)(struct nvmet_req *req);
 	int (*add_port)(struct nvmet_port *port);
 	void (*remove_port)(struct nvmet_port *port);
+	int (*start_ctrl)(struct nvmet_ctrl *ctrl);
 	void (*delete_ctrl)(struct nvmet_ctrl *ctrl);
 	void (*disc_traddr)(struct nvmet_req *req,
 			struct nvmet_port *port, char *traddr);

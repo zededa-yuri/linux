@@ -505,10 +505,9 @@ static int nvmet_vhost_init_sq(struct nvmet_vhost_sq *sq,
 	return 0;
 }
 
-__maybe_unused
-static void nvmet_vhost_start_ctrl(void *priv)
+static int nvmet_vhost_start_ctrl(struct nvmet_ctrl *target_ctrl)
 {
-	struct nvmet_vhost_ctrl *ctrl = priv;
+	struct nvmet_vhost_ctrl *ctrl = target_ctrl->private;
 	u32 page_bits = NVME_CC_MPS(ctrl->ctrl->cc) + 12;
 	u32 page_size = 1 << page_bits;
 	int ret;
@@ -529,6 +528,8 @@ static void nvmet_vhost_start_ctrl(void *priv)
 		pr_warn("nvmet_vhost_init_sq failed!!!\n");
 		BUG_ON(1);
 	}
+
+	return 0;
 }
 
 static void nvmet_vhost_create_cq(struct nvmet_req *req)
@@ -734,6 +735,8 @@ nvmet_vhost_set_endpoint(struct nvmet_vhost_ctrl *ctrl,
 		return PTR_ERR(tgt_ctrl);
 	}
 
+	/* XXX: use container_of instead */
+	tgt_ctrl->private = ctrl;
 	ctrl->cntlid = tgt_ctrl->cntlid;
 	ctrl->ctrl = tgt_ctrl;
 
@@ -882,8 +885,8 @@ static int nvmet_bar_write(struct nvmet_vhost_ctrl *ctrl, int offset, u64 val)
 	int status = NVME_SC_SUCCESS;
 
 	switch(offset) {
-//	case NVME_REG_CC:
-//		nvmet_update_cc(nvme_ctrl, val);
+	case NVME_REG_CC:
+		nvmet_update_cc(ctrl->ctrl, val);
 		break;
 	case NVME_REG_AQA:
 		ctrl->aqa = val & 0xffffffff;
@@ -1212,6 +1215,7 @@ static const struct nvmet_fabrics_ops nvmet_vhost_fabric_ops = {
 	.add_port		= nvmet_vhost_add_port,
 	.remove_port		= nvmet_vhost_remove_port,
 	.queue_response		= nvmet_vhost_queue_response,
+	.start_ctrl             = nvmet_vhost_start_ctrl,
 	.delete_ctrl		= nvmet_vhost_delete_ctrl,
 	.install_queue		= nvmet_vhost_install_queue,
 	.disc_traddr		= nvmet_vhost_disc_port_addr,
