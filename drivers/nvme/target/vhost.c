@@ -869,6 +869,14 @@ static int nvmet_vhost_bar_read(struct nvmet_ctrl *ctrl, int offset, u64 *val)
 		*val = (NVMET_VHOST_AQ_DEPTH - 1) |
 		      (((NVMET_VHOST_AQ_DEPTH - 1) << 16));
 		break;
+	case NVME_REG_CMBSZ:	/* Controller Memory Buffer Size */
+		pr_err("NVME_REG_CMBSZ 0x%x\n", offset);
+		// status = NVME_SC_INVALID_FIELD | NVME_SC_DNR;
+		break;
+	case NVME_REG_CMBLOC:	/* Controller Memory Buffer Location */
+		pr_err("NVME_REG_CMBLOC 0x%x\n", offset);
+		// status = NVME_SC_INVALID_FIELD | NVME_SC_DNR;
+		break;
 	default:
 		printk("Unknown offset: 0x%x\n", offset);
 		status = NVME_SC_INVALID_FIELD | NVME_SC_DNR;
