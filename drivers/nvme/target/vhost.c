@@ -304,6 +304,7 @@ static int nvmet_vhost_map_prp(struct nvmet_vhost_ctrl *ctrl, struct scatterlist
 	int num_prps = (len >> ctrl->page_bits) + 1;
 	//FIXME
 	int is_write = 1;
+	int ret;
 
 	trans_len = min(len, trans_len);
 	if (!prp1)
@@ -324,7 +325,9 @@ static int nvmet_vhost_map_prp(struct nvmet_vhost_ctrl *ctrl, struct scatterlist
 
 			nents = (len + ctrl->page_size - 1) >> ctrl->page_bits;
 			prp_trans = min(ctrl->max_prp_ents, nents) * sizeof(u64);
-			nvmet_vhost_read(&ctrl->vdev, prp2, (void *)prp_list, prp_trans);
+			ret = nvmet_vhost_read(&ctrl->vdev, prp2, (void *)prp_list, prp_trans);
+			if (ret)
+				pr_err("nvmet_vhost_read failed at line %d\n", __LINE__);
 
 			while (len != 0) {
 				u64 prp_ent = le64_to_cpu(prp_list[i]);
@@ -337,7 +340,10 @@ static int nvmet_vhost_map_prp(struct nvmet_vhost_ctrl *ctrl, struct scatterlist
 					i = 0;
 					nents = (len + ctrl->page_size - 1) >> ctrl->page_bits;
 					prp_trans = min(ctrl->max_prp_ents, nents) * sizeof(u64);
-					nvmet_vhost_read(&ctrl->vdev, prp_ent, (void *)prp_list, prp_trans);
+					ret = nvmet_vhost_read(&ctrl->vdev, prp_ent, (void *)prp_list, prp_trans);
+					if (ret)
+						pr_err("nvmet_vhost_read failed at line %d\n", __LINE__);
+
 					prp_ent = le64_to_cpu(prp_list[i]);
 				}
 
