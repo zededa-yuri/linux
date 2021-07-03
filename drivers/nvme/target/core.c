@@ -1118,6 +1118,14 @@ static void nvmet_start_ctrl(struct nvmet_ctrl *ctrl)
 		return;
 	}
 
+	if (ctrl->ops->start_ctrl) {
+		int ret = ctrl->ops->start_ctrl(ctrl);
+		if (ret) {
+			pr_err("failed to start fabric ctrl\n");
+			/* XXX: cleanup */
+		}
+	}
+
 	ctrl->csts = NVME_CSTS_RDY;
 
 	/*
@@ -1129,19 +1137,13 @@ static void nvmet_start_ctrl(struct nvmet_ctrl *ctrl)
 	if (ctrl->kato)
 		mod_delayed_work(system_wq, &ctrl->ka_work, ctrl->kato * HZ);
 
-	if (ctrl->ops->start_ctrl) {
-		int ret = ctrl->ops->start_ctrl(ctrl);
-		if (ret) {
-			pr_err("failed to start fabric ctrl\n");
-			/* XXX: cleanup */
-		}
-	}
 }
 
 static void nvmet_clear_ctrl(struct nvmet_ctrl *ctrl)
 {
 	lockdep_assert_held(&ctrl->lock);
 
+	pr_debug("Disabling NVME_CSTS_RDY\n");
 	/* XXX: tear down queues? */
 	ctrl->csts &= ~NVME_CSTS_RDY;
 	ctrl->cc = 0;
