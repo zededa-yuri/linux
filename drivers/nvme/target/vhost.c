@@ -229,6 +229,7 @@ static int nvmet_vhost_cq_thread(void *arg)
 	struct nvmet_vhost_cq *sq = arg;
 
 	while (!kthread_should_stop()) {
+		set_current_state(TASK_INTERRUPTIBLE);
 		nvmet_vhost_post_cqes(sq);
 
 		schedule();
@@ -441,6 +442,7 @@ static int nvmet_vhost_sq_thread(void *opaque)
 	struct nvmet_vhost_sq *sq = opaque;
 
 	while (!kthread_should_stop()) {
+		set_current_state(TASK_INTERRUPTIBLE);
 		nvmet_vhost_process_sq(sq);
 
 		schedule();
