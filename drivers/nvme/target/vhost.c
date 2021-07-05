@@ -59,6 +59,7 @@ struct nvmet_vhost_iod {
 	struct nvmet_vhost_sq	*sq;
 	struct scatterlist	sg[NVMET_VHOST_MAX_SEGMENTS];
 	struct nvme_command	cmd;
+	struct nvme_completion	cqe;
 	struct nvme_completion	rsp;
 	struct nvmet_req	req;
 	struct list_head	entry;
@@ -499,6 +500,7 @@ static int nvmet_vhost_init_sq(struct nvmet_vhost_sq *sq,
 		iod->req.cmd = &iod->cmd;
 		/* iod->req.rsp = &iod->rsp; */
 		iod->sq = sq;
+		iod->req.cqe = &iod->cqe;
 		list_add_tail(&iod->entry, &sq->req_list);
 	}
 	sq->scheduled = 0;
