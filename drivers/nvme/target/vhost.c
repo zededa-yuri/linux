@@ -1051,7 +1051,7 @@ static int nvmet_vhost_open(struct inode *inode, struct file *f)
 
 	/* We don't use virtqueue */
 	vhost_dev_init(&ctrl->vdev, NULL, 0, 0, 0, 0,
-		       false, nvmet_vhost_process_iotlb_msg);
+		       true, nvmet_vhost_process_iotlb_msg);
 
 	f->private_data = ctrl;
 
