@@ -891,6 +891,8 @@ static int nvmet_vhost_bar_read(struct nvmet_ctrl *ctrl, int offset, u64 *val)
 		break;
 	case NVME_REG_CMBSZ:	/* Controller Memory Buffer Size */
 		pr_err("NVME_REG_CMBSZ 0x%x\n", offset);
+		/* XXX: CMB region is not supported yet  */
+		*val = 0;
 		// status = NVME_SC_INVALID_FIELD | NVME_SC_DNR;
 		break;
 	case NVME_REG_CMBLOC:	/* Controller Memory Buffer Location */
