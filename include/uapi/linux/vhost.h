@@ -155,5 +155,6 @@
 #define VHOST_NVME_CLEAR_ENDPOINT _IOW(VHOST_VIRTIO, 0x46, struct vhost_nvme_target)
 #define VHOST_NVME_SET_EVENTFD _IOW(VHOST_VIRTIO, 0x47, struct nvmet_vhost_eventfd)
 #define VHOST_NVME_BAR _IOW(VHOST_VIRTIO, 0x48, struct nvmet_vhost_bar)
+#define VHOST_NVME_START_CTRL _IO(VHOST_VIRTIO, 0x49)
 
 #endif

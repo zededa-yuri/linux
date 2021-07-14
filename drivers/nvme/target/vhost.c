@@ -1171,6 +1171,9 @@ static long nvmet_vhost_ioctl(struct file *f, unsigned int ioctl,
 		if (copy_from_user(&features, argp, sizeof(features)))
 			return -EFAULT;
 		return vhost_nvme_set_features(ctrl, features);
+	case VHOST_NVME_START_CTRL:
+		/* nvmet_update_cc(ctrl->ctrl, ctrl->ctrl->cc | 1<<NVME_CC_EN_SHIFT); */
+		return 0;
 	default:
 		mutex_lock(&ctrl->vdev.mutex);
 		r = vhost_dev_ioctl(&ctrl->vdev, ioctl, argp);
