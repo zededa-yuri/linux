@@ -95,7 +95,7 @@ struct nvmet_vhost_sq {
 	struct list_head	req_list;
 	struct list_head	entry;
 	struct mutex            lock;
-	struct task_struct	*thread;
+	/* struct task_struct	*thread; */
 	int			scheduled;
 };
 
@@ -514,7 +514,7 @@ static int nvmet_vhost_init_sq(struct nvmet_vhost_sq *sq,
 		list_add_tail(&iod->entry, &sq->req_list);
 	}
 	sq->scheduled = 0;
-	sq->thread = kthread_create(nvmet_vhost_sq_thread, sq, "nvmet_vhost_sq");
+	/* sq->thread = kthread_create(nvmet_vhost_sq_thread, sq, "nvmet_vhost_sq"); */
 
 	cq = ctrl->cqs[cqid];
 	list_add_tail(&sq->entry, &cq->sq_list);
@@ -974,12 +974,12 @@ static int nvmet_vhost_process_db(struct nvmet_ctrl *ctrl, int offset, u64 val)
 				sq = list_entry(p, struct nvmet_vhost_sq, entry);
 				if (!sq->scheduled) {
 					sq->scheduled = 1;
-					wake_up_process(sq->thread);
+					/* wake_up_process(sq->thread); */
 				}
 			}
 			if (!vcq->scheduled) {
 				vcq->scheduled = 1;
-				wake_up_process(vcq->thread);
+				/* wake_up_process(vcq->thread); */
 			}
 		}
 
@@ -1003,7 +1003,7 @@ static int nvmet_vhost_process_db(struct nvmet_ctrl *ctrl, int offset, u64 val)
 		vsq->tail = new_tail;
 		if (!vsq->scheduled) {
 			vsq->scheduled = 1;
-			wake_up_process(vsq->thread);
+			/* wake_up_process(vsq->thread); */
 		}
 		mutex_unlock(&vsq->lock);
 	}
@@ -1062,7 +1062,7 @@ static void nvme_free_sq(struct nvmet_vhost_sq *sq,
 		struct nvmet_vhost_ctrl *ctrl)
 {
 	ctrl->sqs[sq->sq.qid] = NULL;
-	kthread_stop(sq->thread);
+	/* kthread_stop(sq->thread); */
 	kfree(sq->io_req);
 	if (sq->sq.qid)
 		kfree(sq);
