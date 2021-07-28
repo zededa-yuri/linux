@@ -120,6 +120,7 @@ struct nvmet_vhost_ctrl {
 	u16 max_prp_ents;
 	u16 page_bits;
 	u32 page_size;
+	struct vhost_work work;
 };
 
 struct nvmet_vhost_port {
@@ -941,6 +942,11 @@ static int nvmet_bar_write(struct nvmet_vhost_ctrl *ctrl, int offset, u64 val)
 	return status;
 }
 
+static void process_work(struct vhost_work *work)
+{
+	
+}
+
 static int nvmet_vhost_process_db(struct nvmet_ctrl *ctrl, int offset, u64 val)
 {
 	u16 qid;
@@ -949,6 +955,9 @@ static int nvmet_vhost_process_db(struct nvmet_ctrl *ctrl, int offset, u64 val)
 		return -EINVAL;
 
 	if (((offset - 0x1000) >> 2) & 1) {
+		/* Completion Queue y Head Doorbell
+		 * Offset (1000h + ((2y + 1) * (4 << CAP.DSTRD))): */
+
 		u16 new_head = val & 0xffff;
 		int start_sqs;
 		struct nvmet_vhost_cq *vcq;
@@ -988,6 +997,10 @@ static int nvmet_vhost_process_db(struct nvmet_ctrl *ctrl, int offset, u64 val)
 		if (vcq->tail != vcq->head)
 			eventfd_signal(vcq->eventfd, 1);
 	} else {
+		/* Submission Queue Tail Doorbell
+		 * Offset (1000h + ((2y + 1) * (4 << CAP.DSTRD)))
+		 */
+
 		struct nvmet_vhost_sq *vsq;
 		struct nvmet_sq *sq;
 		u16 new_tail = val & 0xffff;
@@ -1004,7 +1017,9 @@ static int nvmet_vhost_process_db(struct nvmet_ctrl *ctrl, int offset, u64 val)
 		mutex_lock(&vsq->lock);
 		vsq->tail = new_tail;
 		if (!vsq->scheduled) {
+			struct nvmet_vhost_ctrl *vhost_ctrl = ctrl->private;
 			vsq->scheduled = 1;
+			vhost_work_queue(&vhost_ctrl->vdev, &vhost_ctrl->work);
 			/* wake_up_process(vsq->thread); */
 		}
 		mutex_unlock(&vsq->lock);
@@ -1057,6 +1072,7 @@ static int nvmet_vhost_open(struct inode *inode, struct file *f)
 
 	f->private_data = ctrl;
 
+	vhost_work_init(&ctrl->work, process_work);
 	return 0;
 }
 
