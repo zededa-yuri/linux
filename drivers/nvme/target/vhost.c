@@ -134,7 +134,7 @@ noinline
 static int nvmet_vhost_read(struct vhost_dev *vdev, u64 guest_pa,
 		void *buf, uint32_t size)
 {
-	int ret =  vhost_mem_copy_to_user(vdev, buf, (void *)guest_pa, size);
+	int ret = vhost_mem_copy_from_user(vdev, buf, (void *)guest_pa, size);
 	if (ret)
 		panic("%pS: Failed to read 0x%x bytes at 0x%llx, ret=%d\n",
 		      __builtin_return_address(0), size, guest_pa, ret);
@@ -145,7 +145,7 @@ noinline
 static int nvmet_vhost_write(struct vhost_dev *vdev, u64 guest_pa,
 		void *buf, uint32_t size)
 {
-	int ret = vhost_mem_copy_from_user(vdev, buf, (void *)guest_pa, size);
+	int ret =  vhost_mem_copy_to_user(vdev, buf, (void *)guest_pa, size);
 	if (ret)
 		panic("%pS: Failed to write 0x%x bytes at 0x%llx, ret=%d\n",
 		      __builtin_return_address(0), size, guest_pa, ret);
