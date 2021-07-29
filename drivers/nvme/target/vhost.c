@@ -944,7 +944,10 @@ static int nvmet_bar_write(struct nvmet_vhost_ctrl *ctrl, int offset, u64 val)
 
 static void process_work(struct vhost_work *work)
 {
-	
+	struct nvmet_vhost_ctrl *ctrl = container_of(work,
+						     struct nvmet_vhost_ctrl,
+						     work);
+	nvmet_vhost_process_sq(ctrl->sqs[0]);
 }
 
 static int nvmet_vhost_process_db(struct nvmet_ctrl *ctrl, int offset, u64 val)
