@@ -553,30 +553,17 @@ static int nvmet_vhost_start_ctrl(struct nvmet_ctrl *target_ctrl)
 	return 0;
 }
 
-static void nvmet_vhost_create_cq(struct nvmet_req *req)
+static int nvmet_vhost_create_cq(struct nvmet_vhost_ctrl *ctrl, struct nvme_command *cmd_c)
 {
-	struct nvmet_cq *cq;
 	struct nvmet_vhost_cq *vcq;
-	struct nvmet_vhost_ctrl *ctrl;
-	struct nvme_create_cq *cmd;
-	u16 cqid;
-	u16 vector;
-	u16 qsize;
-	u16 qflags;
-	u64 prp1;
-	int status;
-	int ret;
-
-	cq = req->cq;
-	vcq = cq_to_vcq(cq);
-	ctrl = vcq->ctrl;
-	cmd = &req->cmd->create_cq;
-	cqid = le16_to_cpu(cmd->cqid);
-	vector = le16_to_cpu(cmd->irq_vector);
-	qsize = le16_to_cpu(cmd->qsize);
-	qflags = le16_to_cpu(cmd->cq_flags);
-	prp1 = le64_to_cpu(cmd->prp1);
-	status = NVME_SC_SUCCESS;
+	struct nvme_create_cq *cmd = &cmd_c->create_cq;
+	u16 cqid = le16_to_cpu(cmd->cqid);
+	u16 vector = le16_to_cpu(cmd->irq_vector);
+	u16 qsize = le16_to_cpu(cmd->qsize);
+	u16 qflags = le16_to_cpu(cmd->cq_flags);
+	u64 prp1 = le64_to_cpu(cmd->prp1);
+	int status = NVME_SC_SUCCESS;
+	int ret = 0;
 
 	if (!cqid || (cqid && !nvmet_vhost_check_cqid(ctrl->ctrl, cqid))) {
 		status = NVME_SC_QID_INVALID | NVME_SC_DNR;
@@ -612,27 +599,20 @@ static void nvmet_vhost_create_cq(struct nvmet_req *req)
 		status = NVME_SC_INTERNAL | NVME_SC_DNR;
 
 out:
-	nvmet_req_complete(req, status);
+	return status;
 }
 
-static void nvmet_vhost_create_sq(struct nvmet_req *req)
+static int nvmet_vhost_create_sq(struct nvmet_vhost_ctrl *ctrl, struct nvme_command *cmd_c)
 {
-	struct nvme_create_sq *cmd = &req->cmd->create_sq;
+	struct nvme_create_sq *cmd = &cmd_c->create_sq;
 	u16 cqid = le16_to_cpu(cmd->cqid);
 	u16 sqid = le16_to_cpu(cmd->sqid);
 	u16 qsize = le16_to_cpu(cmd->qsize);
 	u16 qflags = le16_to_cpu(cmd->sq_flags);
 	u64 prp1 = le64_to_cpu(cmd->prp1);
-
-	struct nvmet_sq *sq = req->sq;
 	struct nvmet_vhost_sq *vsq;
-	struct nvmet_vhost_ctrl *ctrl;
-	int status;
+	int status = NVME_SC_SUCCESS;
 	int ret;
-
-	status = NVME_SC_SUCCESS;
-	vsq = sq_to_vsq(sq);
-	ctrl = vsq->ctrl;
 
 	if (!cqid || nvmet_vhost_check_cqid(ctrl->ctrl, cqid)) {
 		status = NVME_SC_CQ_INVALID | NVME_SC_DNR;
@@ -656,7 +636,7 @@ static void nvmet_vhost_create_sq(struct nvmet_req *req)
 	}
 
 	vsq = kmalloc(sizeof(*vsq), GFP_KERNEL);
-	if (!sq) {
+	if (!vsq) {
 		status = NVME_SC_INTERNAL | NVME_SC_DNR;
 		goto out;
 	}
@@ -666,7 +646,7 @@ static void nvmet_vhost_create_sq(struct nvmet_req *req)
 		status = NVME_SC_INTERNAL | NVME_SC_DNR;
 
 out:
-	nvmet_req_complete(req, status);
+	return status;
 }
 
 static int nvmet_vhost_process_iotlb_msg(struct vhost_dev *dev,
@@ -679,19 +659,13 @@ static int nvmet_vhost_process_iotlb_msg(struct vhost_dev *dev,
 
 
 __maybe_unused
-static int nvmet_vhost_parse_admin_cmd(struct nvmet_req *req)
+static int nvmet_vhost_parse_admin_cmd(struct nvmet_vhost_ctrl *ctrl, struct nvme_command *cmd)
 {
-	struct nvme_command *cmd = req->cmd;
-
 	switch (cmd->common.opcode) {
 	case nvme_admin_create_cq:
-		req->execute = nvmet_vhost_create_cq;
-		req->transfer_len = 0;
-		return 0;
+		return nvmet_vhost_create_cq(ctrl, cmd);
 	case nvme_admin_create_sq:
-		req->execute = nvmet_vhost_create_sq;
-		req->transfer_len = 0;
-		return 0;
+		return nvmet_vhost_create_sq(ctrl, cmd);
 	}
 
 	return -1;
@@ -1161,6 +1135,7 @@ static long nvmet_vhost_ioctl(struct file *f, unsigned int ioctl,
 {
 	struct nvmet_vhost_ctrl *ctrl = f->private_data;
 	struct vhost_nvme_target conf;
+	struct nvme_command cmd;
 	void __user *argp = (void __user *)arg;
 	// u64 __user *featurep = argp;
 	u64 features;
@@ -1195,6 +1170,10 @@ static long nvmet_vhost_ioctl(struct file *f, unsigned int ioctl,
 	case VHOST_NVME_START_CTRL:
 		/* nvmet_update_cc(ctrl->ctrl, ctrl->ctrl->cc | 1<<NVME_CC_EN_SHIFT); */
 		return 0;
+	case VHOST_NVME_ADMIN_CMD:
+		if (copy_from_user(&cmd, argp, sizeof(cmd)))
+			return -EFAULT;
+		return nvmet_vhost_parse_admin_cmd(ctrl, &cmd);
 	default:
 		mutex_lock(&ctrl->vdev.mutex);
 		r = vhost_dev_ioctl(&ctrl->vdev, ioctl, argp);
