@@ -417,6 +417,9 @@ static void nvmet_vhost_process_sq(struct nvmet_vhost_sq *sq)
 			goto out;
 		}
 
+		pr_debug("QQQQ: Processing command 0x%x, flags=0x%x, pcmd=%p\n",
+			 cmd->common.opcode, cmd->common.flags, cmd);
+
 		ret = nvmet_req_init(&iod->req, &cq->cq, &sq->sq, &nvmet_vhost_ops);
 		if (ret) {
 			pr_warn("nvmet_req_init error: ret 0x%x, qid %d\n", ret, sq->sq.qid);
@@ -661,6 +664,7 @@ static int nvmet_vhost_process_iotlb_msg(struct vhost_dev *dev,
 __maybe_unused
 static int nvmet_vhost_parse_admin_cmd(struct nvmet_vhost_ctrl *ctrl, struct nvme_command *cmd)
 {
+	pr_debug("QQQQ: processing admin command, opcode %d\n", cmd->common.opcode);
 	switch (cmd->common.opcode) {
 	case nvme_admin_create_cq:
 		return nvmet_vhost_create_cq(ctrl, cmd);
