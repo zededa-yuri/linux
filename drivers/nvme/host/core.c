@@ -524,6 +524,9 @@ struct request *nvme_alloc_request(struct request_queue *q,
 	unsigned op = nvme_is_write(cmd) ? REQ_OP_DRV_OUT : REQ_OP_DRV_IN;
 	struct request *req;
 
+	pr_err("QQQQ: allocate request opcode %d, flags=0x%x\n", cmd->common.opcode,
+	       cmd->common.flags);
+
 	if (qid == NVME_QID_ANY) {
 		req = blk_mq_alloc_request(q, op, flags);
 	} else {
