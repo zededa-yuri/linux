@@ -981,6 +981,7 @@ static int nvmet_vhost_process_db(struct nvmet_ctrl *ctrl, int offset, u64 val)
 		struct nvmet_vhost_sq *vsq;
 		struct nvmet_sq *sq;
 		u16 new_tail = val & 0xffff;
+		u16 old_tail;
 
 		qid = (offset - 0x1000) >> 3;
 		if (nvmet_vhost_check_sqid(ctrl, qid))
@@ -992,6 +993,7 @@ static int nvmet_vhost_process_db(struct nvmet_ctrl *ctrl, int offset, u64 val)
 
 		vsq = sq_to_vsq(sq);
 		mutex_lock(&vsq->lock);
+		old_tail = vsq->tail;
 		vsq->tail = new_tail;
 		if (!vsq->scheduled) {
 			struct nvmet_vhost_ctrl *vhost_ctrl = ctrl->private;
@@ -1000,6 +1002,8 @@ static int nvmet_vhost_process_db(struct nvmet_ctrl *ctrl, int offset, u64 val)
 			/* wake_up_process(vsq->thread); */
 		}
 		mutex_unlock(&vsq->lock);
+
+		pr_debug("SQ Tail change %d->%d\n", old_tail, new_tail);
 	}
 
 	return 0;
